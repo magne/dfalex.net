@@ -19,4 +19,17 @@
     <PackageReference Include="FluentAssertions" Version="5.9.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="By3Test.out.txt" />
+    <EmbeddedResource Include="By3Test.out.txt" />
+    <None Remove="JavaTest.out.txt" />
+    <EmbeddedResource Include="JavaTest.out.txt" />
+    <None Remove="SearcherTestInput.txt" />
+    <EmbeddedResource Include="SearcherTestInput.txt" />
+    <None Remove="SearcherTestInput2.txt" />
+    <EmbeddedResource Include="SearcherTestInput2.txt" />
+    <None Remove="SearcherTestOutput.txt" />
+    <EmbeddedResource Include="SearcherTestOutput.txt" />
+  </ItemGroup>
+
 </Project>
