@@ -2,7 +2,7 @@
 .vscode/
 [Bb]in/
 [Oo]bj/
-
+BenchmarkDotNet.Artifacts/
 
 Thumbs.db
 Desktop.ini
