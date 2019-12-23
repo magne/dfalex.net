@@ -17,7 +17,7 @@
 
 namespace CodeHive.DfaLex
 {
-    internal static class StringReplacements
+    public static class StringReplacements
     {
         /// <summary>
         /// Replacement that leaves the matching substring unmodified

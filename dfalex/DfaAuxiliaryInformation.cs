@@ -34,7 +34,7 @@ namespace CodeHive.DfaLex
     /// them for other calculations when required.
     /// </summary>
     /// <typeparam name="TResult"></typeparam>
-    internal class DfaAuxiliaryInformation<TResult>
+    public class DfaAuxiliaryInformation<TResult>
     {
         private static readonly object                  Sentinel = new object();
         private readonly        List<DfaState<TResult>> startStates;
@@ -63,7 +63,7 @@ namespace CodeHive.DfaLex
         /// <returns>a list that contains every state reachable from the start states, with the index of each state s
         /// equal to s.getStateNumber().  Unused indexes will have null values.</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public List<DfaState<TResult>> GetStatesByNumber()
+        public IList<DfaState<TResult>> GetStatesByNumber()
         {
             if (statesByNumber == null)
             {
@@ -277,7 +277,7 @@ namespace CodeHive.DfaLex
         /// </summary>
         /// <returns>The list of destinies by state number</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public List<TResult> GetDestinies()
+        public IList<TResult> GetDestinies()
         {
             if (destiniesByNumber != null)
             {

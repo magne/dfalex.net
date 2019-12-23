@@ -26,7 +26,7 @@ namespace CodeHive.DfaLex
     /// A pattern represents a set of strings. A string in the set is said to "match" the pattern.
     /// </summary>
     [Serializable]
-    internal abstract class Pattern : IMatchable
+    public abstract class Pattern : IMatchable
     {
         private volatile Pattern reverse;
 

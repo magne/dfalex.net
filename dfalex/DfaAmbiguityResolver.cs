@@ -30,5 +30,5 @@ namespace CodeHive.DfaLex
     /// </summary>
     /// <param name="accepts">The accept results ambiguities to resolve</param>
     /// <typeparam name="TResult">The type of result to produce by matching a pattern.</typeparam>
-    internal delegate TResult DfaAmbiguityResolver<TResult>(ISet<TResult> accepts);
+    public delegate TResult DfaAmbiguityResolver<TResult>(ISet<TResult> accepts);
 }

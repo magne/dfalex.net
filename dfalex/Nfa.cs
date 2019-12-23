@@ -27,7 +27,7 @@ namespace CodeHive.DfaLex
     /// A set of <see cref="IMatchable"/> patterns is converted to an NFA as an intermediate step toward creating the DFA.
     /// </summary>
     /// <typeparam name="TResult">The type of result produced by matching a pattern.</typeparam>
-    internal class Nfa<TResult>
+    public class Nfa<TResult>
     {
         private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
         private readonly List<List<int>>           stateEpsilons    = new List<List<int>>();
@@ -37,10 +37,7 @@ namespace CodeHive.DfaLex
         /// Get the number of states in the NFA
         /// </summary>
         /// <returns>the total number of states that have been added with <see cref="AddState"/></returns>
-        public int NumStates()
-        {
-            return stateAccepts.Count;
-        }
+        public int NumStates => stateAccepts.Count;
 
         /// <summary>
         /// Add a new state to the NFA.

@@ -17,7 +17,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
@@ -52,7 +51,7 @@ namespace CodeHive.DfaLex
     /// unnecessary, since building DFAs is more than fast enough to do during runtime initialization.
     /// </summary>
     /// <typeparam name="TResult">The type of result to produce by matching a pattern.</typeparam>
-    internal class DfaBuilder<TResult>
+    public class DfaBuilder<TResult>
     {
         //dfa types for cache keys
         private static readonly int DFATYPE_MATCHER       = 0;
@@ -139,7 +138,7 @@ namespace CodeHive.DfaLex
         /// case.</param>
         /// <returns>Start states for DFAs that match the given languages.  This will have the same length as languages,
         /// with corresponding start states in corresponding positions.</returns>
-        public List<DfaState<TResult>> Build(List<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
+        public IList<DfaState<TResult>> Build(IList<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
             if (languages.Count < 1)
             {
@@ -217,7 +216,7 @@ namespace CodeHive.DfaLex
         /// <param name="languages">sets defining the languages to build</param>
         /// <returns>Start states for reverse finders for the given languages.  This will have the same length as
         /// languages, with corresponding start states in corresponding positions.</returns>
-        public List<DfaState<bool>> BuildReverseFinders(List<ISet<TResult>> languages)
+        public IList<DfaState<bool>> BuildReverseFinders(IList<ISet<TResult>> languages)
         {
             if (languages.Count == 0)
             {
@@ -243,6 +242,13 @@ namespace CodeHive.DfaLex
             return serializableDfa.GetStartStates();
         }
 
+        /// <summary>
+        /// Build a <see cref="StringSearcher{TResult}"/> for all the patterns that have been added to this builder
+        /// </summary>
+        /// <param name="ambiguityResolver">When patterns for multiple results match the same string, this is called to
+        /// combine the multiple results into one.  If this is null, then a <see cref="DfaAmbiguityException{TResult}"/>
+        /// will be thrown in that case.</param>
+        /// <returns>A <see cref="StringSearcher{TResult}"/> for all the patterns in this builder</returns>
         public StringSearcher<TResult> BuildStringSearcher(DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
             return new StringSearcher<TResult>(Build(ambiguityResolver), BuildReverseFinder());
@@ -263,7 +269,7 @@ namespace CodeHive.DfaLex
         /// with a memoized result when the call is complete.</param>
         /// <returns>DFA start states that are equivalent to the given NFA start states.  This will have the same length as nfaStartStates, with
         /// corresponding start states in corresponding positions.</returns>
-        public static List<DfaState<TResult>> BuildFromNfa(Nfa<TResult> nfa, int[] nfaStartStates, DfaAmbiguityResolver<TResult> ambiguityResolver,
+        public static IList<DfaState<TResult>> BuildFromNfa(Nfa<TResult> nfa, int[] nfaStartStates, DfaAmbiguityResolver<TResult> ambiguityResolver,
             IBuilderCache cache)
         {
             string cacheKey = null;
@@ -304,7 +310,7 @@ namespace CodeHive.DfaLex
             return serializableDfa.GetStartStates();
         }
 
-        private string GetCacheKey(int dfaType, List<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
+        private string GetCacheKey(int dfaType, IList<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
             string cacheKey;
             var hashAlg = new SHA256Managed();
@@ -384,7 +390,7 @@ namespace CodeHive.DfaLex
 
         private static readonly char[] Digits36 = "0123456789abcdefghijklmnopqrstuvwxyz".ToCharArray();
 
-        private static string GetBase32Digest(byte[] messageDigest)
+        private static string GetBase32Digest(IEnumerable<byte> messageDigest)
         {
             var sb = new StringBuilder();
             var bits = 0;
@@ -404,7 +410,7 @@ namespace CodeHive.DfaLex
             return sb.ToString();
         }
 
-        private SerializableDfa<TResult> _build(List<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
+        private SerializableDfa<TResult> _build(IList<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
             var nfa = new Nfa<TResult>();
 
@@ -471,7 +477,7 @@ namespace CodeHive.DfaLex
             return serializableDfa;
         }
 
-        private SerializableDfa<bool> _buildReverseFinders(List<ISet<TResult>> languages)
+        private SerializableDfa<bool> _buildReverseFinders(IList<ISet<TResult>> languages)
         {
             var nfa = new Nfa<bool>();
 
@@ -524,7 +530,7 @@ namespace CodeHive.DfaLex
 
         private static T DefaultAmbiguityResolver<T>(IEnumerable<T> matches)
         {
-            throw new DfaAmbiguityException(matches.Cast<object>());
+            throw new DfaAmbiguityException<T>(matches);
         }
     }
 }

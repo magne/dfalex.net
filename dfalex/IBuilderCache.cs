@@ -21,7 +21,7 @@ namespace CodeHive.DfaLex
     /// Implementations of this interface can cache serializable objects that can be used to bypass expensive building
     /// operations by providing pre-built objects.
     /// </summary>
-    internal interface IBuilderCache
+    public interface IBuilderCache
     {
         /// <summary>
         /// Get a cached item.
@@ -41,5 +41,6 @@ namespace CodeHive.DfaLex
         ///
         /// Keys that differ only by case may or may not be considered equal by this class.</param>
         /// <param name="item">The item to cache, if desired</param>
-        void MaybeCacheItem(string key, object item);    }
+        void MaybeCacheItem(string key, object item);
+    }
 }

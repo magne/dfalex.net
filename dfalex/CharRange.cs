@@ -27,7 +27,7 @@ namespace CodeHive.DfaLex
     /// class can be used to construct simple and complex ranges.
     /// </summary>
     [Serializable]
-    internal class CharRange : IMatchable
+    public class CharRange : IMatchable
     {
         private static readonly char[] NoChars = new char[0];
 

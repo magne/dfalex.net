@@ -25,7 +25,7 @@ namespace CodeHive.DfaLex
     /// </summary>
     /// <typeparam name="TResult">The type of result produced by matching a pattern.</typeparam>
     [Serializable]
-    internal abstract class DfaState<TResult>
+    public abstract class DfaState<TResult>
     {
         /// <summary>
         /// Process acharacter and get the next state.
@@ -42,12 +42,12 @@ namespace CodeHive.DfaLex
         public abstract TResult GetMatch();
 
         /// <summary>
-        /// Get the state number.  All states reachable from the output of a single call to a {@link DfaBuilder} build
-        /// method will be compactly numbered starting at 0.
+        /// Get the state number.  All states reachable from the output of a single call to a <see cref="DfaBuilder{TResult}"/>
+        /// build method will be compactly numbered starting at 0.
         ///
         /// These state numbers can be used to maintain auxiliary information about a DFA.
         ///
-        /// See {@link DfaAuxiliaryInformation}
+        /// See <see cref="DfaAuxiliaryInformation{TResult}"/>
         /// </summary>
         /// <returns>this state's state number</returns>
         public abstract int GetStateNumber();
@@ -59,7 +59,7 @@ namespace CodeHive.DfaLex
         public abstract void EnumerateTransitions(DfaTransitionConsumer<TResult> consumer);
 
         /// <summary>
-        /// Get an {@link Iterable} of all the successor states of this state.
+        /// Get an <see cref="IEnumerable{T}"/> of all the successor states of this state.
         ///
         /// Note that the same successor state may appear more than once in the interation
         /// </summary>

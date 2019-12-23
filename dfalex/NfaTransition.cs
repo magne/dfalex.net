@@ -20,7 +20,7 @@ namespace CodeHive.DfaLex
     /// <summary>
     /// A transition in a <see cref="Nfa{TResult}"/>
     /// </summary>
-    internal sealed class NfaTransition
+    public sealed class NfaTransition
     {
         /// <summary>
         /// The first character that triggers this transition.

@@ -23,7 +23,7 @@ namespace CodeHive.DfaLex
     /// <summary>
     /// Builds search and replace functions that finds patterns in strings and replaces them.
     ///
-    /// Given a set of patterns and associated {@link StringReplacement} functions, you can produce an optimized,
+    /// Given a set of patterns and associated <see cref="StringReplacement"/> functions, you can produce an optimized,
     /// thread-safe Function&lt;String,String&gt; that will find all occurrences of those patterns and replace them
     /// with their replacements.
     ///
@@ -37,7 +37,7 @@ namespace CodeHive.DfaLex
     /// built functions on the first run of your program so they don't need to be built the next time...  But this
     /// is usually unnecessary, since building them is more than fast enough to do during runtime initialization.
     /// </summary>
-    internal class SearchAndReplaceBuilder
+    public class SearchAndReplaceBuilder
     {
         private readonly DfaBuilder<int?>        dfaBuilder;
         private readonly List<StringReplacement> replacements = new List<StringReplacement>();

@@ -17,12 +17,34 @@
 
 namespace CodeHive.DfaLex
 {
-    internal interface IAppendable
+    /// <summary>
+    /// An object to which <see cref="char"/>s and <see cref="string"/>s can be appended.
+    /// </summary>
+    public interface IAppendable
     {
-        IAppendable Append(string csq);
-
+        /// <summary>
+        /// Appends the specified character to this IAppendable.
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns>A reference to this Appendable</returns>
         IAppendable Append(char c);
 
+        /// <summary>
+        /// Appends the specified string to this IAppendable.
+        /// </summary>
+        /// <param name="csq">The character sequence to append. If <paramref name="csq"/> is null, then the four characters
+        /// "null" are appended to this Appendable.</param>
+        /// <returns>A reference to this Appendable</returns>
+        IAppendable Append(string csq);
+
+        /// <summary>
+        /// Appends a subsequence of the specified string to this IAppendable.
+        /// </summary>
+        /// <param name="csq">The string from which a subsequence will be appended. If <paramref name="csq"/> is null,
+        /// then characters will be appended as if csq contained the four characters "null".</param>
+        /// <param name="start">The index of the first character in the subsequence</param>
+        /// <param name="end">The index of the character following the last character in the subsequence</param>
+        /// <returns>A reference to this Appendable</returns>
         IAppendable Append(string csq, int start, int end);
     }
 }

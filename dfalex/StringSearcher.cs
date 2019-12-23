@@ -28,9 +28,9 @@ namespace CodeHive.DfaLex
     /// NOTE: Instances of this class are thread-safe.
     /// </summary>
     /// <typeparam name="TResult">The type of result associated with the patterns being searched for</typeparam>
-    internal class StringSearcher<TResult>
+    public class StringSearcher<TResult>
     {
-        private static readonly IStringMatchEnumerator<TResult> NoMatches = new NoMatchIterator();
+        private static readonly IStringMatchEnumerator<TResult> NoMatches = new NoMatchEnumerator();
         private readonly        DfaState<TResult>               matcher;
         private readonly        DfaState<bool>                  reverseFinder;
 
@@ -119,7 +119,7 @@ namespace CodeHive.DfaLex
                 }
             }
 
-            return new IteratorImpl(src, matcher, maskArray, maskStartPos);
+            return new EnumeratorImpl(src, matcher, maskArray, maskStartPos);
         }
 
         /// <summary>
@@ -131,7 +131,8 @@ namespace CodeHive.DfaLex
         /// If it returns a String, then the pattern occurrence will be replaced with the string returned.
         /// </summary>
         /// <param name="src">the String to search</param>
-        /// <param name="replacer">the {@link ReplacementSelector} that provides new values for matches in the string</param>
+        /// <param name="replacer">the <see cref="ReplacementSelector{TResult}"/> that provides new values for matches
+        /// in the string</param>
         /// <returns>the new string with values replaced</returns>
         public string FindAndReplace(string src, ReplacementSelector<TResult> replacer)
         {
@@ -182,7 +183,7 @@ namespace CodeHive.DfaLex
             return src;
         }
 
-        private class IteratorImpl : IStringMatchEnumerator<TResult>
+        private class EnumeratorImpl : IStringMatchEnumerator<TResult>
         {
             private readonly string            src;
             private readonly DfaState<TResult> matcher;
@@ -197,7 +198,7 @@ namespace CodeHive.DfaLex
             private          TResult           prevResult;
             private          string            prevString;
 
-            internal IteratorImpl(string src, DfaState<TResult> matcher, int[] matchMask, int matchMaskPos)
+            internal EnumeratorImpl(string src, DfaState<TResult> matcher, int[] matchMask, int matchMaskPos)
             {
                 this.src = src;
                 this.matcher = matcher;
@@ -372,7 +373,7 @@ namespace CodeHive.DfaLex
             }
         }
 
-        private class NoMatchIterator : IStringMatchEnumerator<TResult>
+        private class NoMatchEnumerator : IStringMatchEnumerator<TResult>
         {
             public void Dispose()
             { }

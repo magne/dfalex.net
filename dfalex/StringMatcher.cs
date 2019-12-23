@@ -23,9 +23,8 @@ namespace CodeHive.DfaLex
     /// <summary>
     /// This class implements fast matching in a string using DFAs.
     ///
-    /// Substrings matching patterns are discoverd with the {@link #findNext(DfaState)} and
-    /// {@link #matchAt(DfaState, int)} methods, both of which take a DFA start state for the
-    /// patterns to find.
+    /// Substrings matching patterns are discoverd with the <see cref="FindNext"/> and <see cref="MatchAt"/> methods,
+    /// both of which take a DFA start state for the patterns to find.
     ///
     /// NOTE that you don't have to pass the same state every time -- different calls with the
     /// same matcher can search for different patterns and return different kinds of results.
@@ -42,7 +41,7 @@ namespace CodeHive.DfaLex
     ///  length.  No characters at positions &gt;= SearchLimit will be included in matches
     /// </LI></UL>
     /// </summary>
-    internal class StringMatcher<TResult>
+    public class StringMatcher<TResult>
     {
         private const    int    nmmSize = 40;
         private readonly string src;

@@ -23,7 +23,7 @@ namespace CodeHive.DfaLex
     ///
     /// The primary implementation classes are <see cref="Pattern"/> and <see cref="CharRange"/>.
     /// </summary>
-    internal interface IMatchable
+    public interface IMatchable
     {
         /// <summary>
         /// Add states to an NFA to match the desired pattern.

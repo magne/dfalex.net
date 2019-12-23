@@ -26,5 +26,5 @@ namespace CodeHive.DfaLex
     /// <param name="firstChar">First character that triggers this transition</param>
     /// <param name="lastChar">Last character that triggers this transition</param>
     /// <param name="target">Target state of this transition</param>
-    internal delegate void DfaTransitionConsumer<TResult>(char firstChar, char lastChar, DfaState<TResult> target);
+    public delegate void DfaTransitionConsumer<TResult>(char firstChar, char lastChar, DfaState<TResult> target);
 }

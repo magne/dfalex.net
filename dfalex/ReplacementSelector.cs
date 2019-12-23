@@ -33,5 +33,5 @@ namespace CodeHive.DfaLex
     /// replacement.  If you set this &lt;= startPos, a runtime exception will be thrown to abort the infinite loop that
     /// would result.  Almost always return 0.</returns>
     /// <typeparam name="TResult"></typeparam>
-    internal delegate int ReplacementSelector<in TResult>(IAppendable dest, TResult mr, string src, int startPos, int endPos);
+    public delegate int ReplacementSelector<in TResult>(IAppendable dest, TResult mr, string src, int startPos, int endPos);
 }

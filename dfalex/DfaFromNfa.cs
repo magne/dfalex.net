@@ -65,7 +65,7 @@ namespace CodeHive.DfaLex
 
         private void Build()
         {
-            var nfaStateSet = new CompactIntSubset(nfa.NumStates());
+            var nfaStateSet = new CompactIntSubset(nfa.NumStates);
             var dfaStateTransitions = new List<NfaTransition>();
             var transitionQ = new List<NfaTransition>(1000);
 
