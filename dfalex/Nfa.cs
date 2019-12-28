@@ -32,26 +32,44 @@ namespace CodeHive.DfaLex
         private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
         private readonly List<List<int>>           stateEpsilons    = new List<List<int>>();
         private readonly List<TResult>             stateAccepts     = new List<TResult>();
+        private readonly List<bool>                stateAccepting   = new List<bool>();
 
         /// <summary>
         /// Get the number of states in the NFA
         /// </summary>
-        /// <returns>the total number of states that have been added with <see cref="AddState"/></returns>
+        /// <returns>the total number of states that have been added with <see cref="AddState()"/> and
+        /// <see cref="AddState(TResult)"/>.</returns>
         public int NumStates => stateAccepts.Count;
 
         /// <summary>
         /// Add a new state to the NFA.
         /// </summary>
+        /// <returns>the number of the new state</returns>
+        public int AddState()
+        {
+            return AddState(default, false);
+        }
+
+        /// <summary>
+        /// Add a new accepting state to the NFA.
+        /// </summary>
         /// <param name="accept">Add a new state to the NFA</param>
         /// <returns>the number of the new state</returns>
-        public int AddState(TResult accept = default)
+        public int AddState(TResult accept)
+        {
+            return AddState(accept, true);
+        }
+
+        private int AddState(TResult accept, bool accepting)
         {
             var state = stateAccepts.Count;
             stateAccepts.Add(accept);
+            stateAccepting.Add(accepting);
             stateTransitions.Add(null);
             stateEpsilons.Add(null);
             Debug.Assert(stateAccepts.Count == stateTransitions.Count);
             Debug.Assert(stateAccepts.Count == stateEpsilons.Count);
+            Debug.Assert(stateAccepts.Count == stateAccepting.Count);
             return state;
         }
 
@@ -92,6 +110,16 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Is the given state an accepting state?
+        /// </summary>
+        /// <param name="state">the state number</param>
+        /// <returns>True if the given state is accepting</returns>
+        public bool IsAccepting(int state)
+        {
+            return stateAccepting[state];
+        }
+
+        /// <summary>
         /// Get the result attached to the given state
         /// </summary>
         /// <param name="state">the state number</param>
@@ -108,7 +136,7 @@ namespace CodeHive.DfaLex
         /// <returns>true if the state has any transitions or accepts</returns>
         public bool HasTransitionsOrAccepts(int state)
         {
-            return !EqualityComparer<TResult>.Default.Equals(stateAccepts[state], default) || stateTransitions[state] != null;
+            return stateAccepting[state] || stateTransitions[state] != null;
         }
 
         /// <summary>
@@ -155,13 +183,13 @@ namespace CodeHive.DfaLex
                 for (var i = 0; i < reachable.Count; ++i)
                 {
                     ForStateEpsilons(reachable[i],
-                                     num =>
-                                     {
-                                         if (checkSet.Add(num))
-                                         {
-                                             reachable.Add(num);
-                                         }
-                                     });
+                        num =>
+                        {
+                            if (checkSet.Add(num))
+                            {
+                                reachable.Add(num);
+                            }
+                        });
                 }
             }
 
@@ -173,7 +201,7 @@ namespace CodeHive.DfaLex
                     return state;
                 }
 
-                if (!GetAccept(reachable[i]).Equals(default))
+                if (IsAccepting(reachable[i]))
                 {
                     break;
                 }
@@ -185,13 +213,13 @@ namespace CodeHive.DfaLex
             foreach (var src in reachable)
             {
                 ForStateTransitions(src,
-                                    trans =>
-                                    {
-                                        if (transSet.Add(trans))
-                                        {
-                                            AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
-                                        }
-                                    });
+                    trans =>
+                    {
+                        if (transSet.Add(trans))
+                        {
+                            AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
+                        }
+                    });
             }
 
             return newState;

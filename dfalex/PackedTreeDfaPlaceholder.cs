@@ -43,18 +43,19 @@ namespace CodeHive.DfaLex
         // the children of m_internalNodes[x] are at [2x+1-m_internalNodes.length] and [2x+2-m_internalNodes.length]
         // target number -1 means no transition
         private readonly int[]   targetStateNumbers;
+        private readonly bool    accepting;
         private readonly TResult match;
 
         internal PackedTreeDfaPlaceholder(RawDfa<TResult> rawDfa, int stateNum)
         {
             var info = rawDfa.States[stateNum];
-            match = rawDfa.AcceptSets[info.GetAcceptSetIndex()];
+            (accepting, match) = rawDfa.AcceptSets[info.GetAcceptSetIndex()];
 
             var rawTransCount = info.GetTransitionCount();
             if (rawTransCount <= 0)
             {
                 internalNodes = NoChars;
-                targetStateNumbers = new[] { -1 };
+                targetStateNumbers = new[] {-1};
                 return;
             }
 
@@ -95,7 +96,7 @@ namespace CodeHive.DfaLex
             {
                 //all characters same transition
                 internalNodes = NoChars;
-                targetStateNumbers = new[] { trans.State };
+                targetStateNumbers = new[] {trans.State};
                 return;
             }
 
@@ -114,7 +115,7 @@ namespace CodeHive.DfaLex
                 targetStates[i] = num < 0 ? null : allStates[num];
             }
 
-            Delegate = new StateImpl(internalNodes, targetStates, match, statenum);
+            Delegate = new StateImpl(internalNodes, targetStates, accepting, match, statenum);
         }
 
         //generate the tree by inorder traversal
@@ -184,10 +185,11 @@ namespace CodeHive.DfaLex
         {
             private readonly char[]                  internalNodes;
             private readonly DfaStateImpl<TResult>[] targetStates;
+            private readonly bool                    accepting;
             private readonly TResult                 match;
             private readonly int                     stateNum;
 
-            internal StateImpl(char[] internalNodes, DfaStateImpl<TResult>[] targetStates, TResult match, int stateNum)
+            internal StateImpl(char[] internalNodes, DfaStateImpl<TResult>[] targetStates, bool accepting, TResult match, int stateNum)
             {
                 var haveSucc = targetStates.Any(st => st != null);
 
@@ -199,6 +201,7 @@ namespace CodeHive.DfaLex
 
                 this.internalNodes = internalNodes;
                 this.targetStates = targetStates;
+                this.accepting = accepting;
                 this.match = match;
                 this.stateNum = stateNum;
             }
@@ -230,9 +233,19 @@ namespace CodeHive.DfaLex
                 return targetStates[i - internalNodes.Length];
             }
 
-            public override TResult GetMatch()
+            public override bool IsAccepting => accepting;
+
+            public override TResult Match
             {
-                return match;
+                get
+                {
+                    if (!IsAccepting)
+                    {
+                        throw new InvalidOperationException("State is not accepting");
+                    }
+
+                    return match;
+                }
             }
 
             public override int GetStateNumber()

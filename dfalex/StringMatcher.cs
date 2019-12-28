@@ -16,48 +16,47 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace CodeHive.DfaLex
 {
     /// <summary>
     /// This class implements fast matching in a string using DFAs.
     ///
-    /// Substrings matching patterns are discoverd with the <see cref="FindNext"/> and <see cref="MatchAt"/> methods,
-    /// both of which take a DFA start state for the patterns to find.
+    /// Substrings matching patterns are discovered with the <see cref="FindNext"/> and
+    /// <see cref="MatchAt"/> methods, both of which take a DFA start state for the patterns to find.
     ///
     /// NOTE that you don't have to pass the same state every time -- different calls with the
     /// same matcher can search for different patterns and return different kinds of results.
     ///
     /// 3 pointers are maintained in the string:
-    /// <UL><LI>
+    /// <list type="bulled">
+    /// <item>
     ///  The LastMatchStart position is the position in the source string of the start of the
     ///  last successful match, or if no match has been performed yet.
-    /// </LI><LI>
+    /// </item><item>
     ///  The LastMatchEnd position is the position in the source string of the end of the last
     ///  successful match, or 0 of no match has been performed yet
-    /// </LI><LI>
+    /// </item><item>
     ///  The SearchLimit is highest position to search.  This is initially set to the source string
     ///  length.  No characters at positions &gt;= SearchLimit will be included in matches
-    /// </LI></UL>
+    /// </item>
+    /// </list>
     /// </summary>
     public class StringMatcher<TResult>
     {
-        private const    int    nmmSize = 40;
+        private const    int    NmmSize = 40;
         private readonly string src;
-        private          int    lastMatchStart;
-        private          int    lastMatchEnd;
         private          int    limit;
 
         //non-matching memo
         //For all x >= m_nmmStart, whenever you're in m_nmmState[x] at position m_nmmPositions[x],
         //you will fail to find a match
-        private          int                 nmmStart     = nmmSize;
-        private readonly int[]               nmmPositions = new int[nmmSize];
-        private readonly DfaState<TResult>[] nmmStates    = new DfaState<TResult>[nmmSize];
+        private          int                 nmmStart     = NmmSize;
+        private readonly int[]               nmmPositions = new int[NmmSize];
+        private readonly DfaState<TResult>[] nmmStates    = new DfaState<TResult>[NmmSize];
 
         /// <summary>
-        ///Create a new StringMatcher.
+        /// Create a new StringMatcher.
         ///
         /// The LastMatchStart and LastMatchEnd positions are initialized to zero
         /// </summary>
@@ -85,10 +84,10 @@ namespace CodeHive.DfaLex
                 throw new IndexOutOfRangeException("Invalid positions in StringMatcher.setPositions");
             }
 
-            this.lastMatchStart = lastMatchStart;
-            this.lastMatchEnd = lastMatchEnd;
+            LastMatchStart = lastMatchStart;
+            LastMatchEnd = lastMatchEnd;
             limit = searchLimit;
-            nmmStart = nmmSize;
+            nmmStart = NmmSize;
         }
 
         /// <summary>
@@ -104,12 +103,12 @@ namespace CodeHive.DfaLex
         /// <summary>
         /// Get the start position of the last successful match, or 0 if there isn't one.
         /// </summary>
-        public int LastMatchStart => lastMatchStart;
+        public int LastMatchStart { get; private set; }
 
         /// <summary>
         /// Get the end position of the last successful match, or 0 if there isn't one
         /// </summary>
-        public int LastMatchEnd => lastMatchEnd;
+        public int LastMatchEnd { get; private set; }
 
         /// <summary>
         /// Get the last successful matching substring, or "" if there isn't one.
@@ -118,58 +117,59 @@ namespace CodeHive.DfaLex
         {
             get
             {
-                if (lastMatchEnd <= lastMatchStart)
+                if (LastMatchEnd <= LastMatchStart)
                 {
                     return string.Empty;
                 }
 
-                return src.Substring(lastMatchStart, lastMatchEnd - lastMatchStart);
+                return src.Substring(LastMatchStart, LastMatchEnd - LastMatchStart);
             }
         }
 
         /// <summary>
-        /// Find the next non-empty match
+        /// Find the next non-empty match.
         ///
-        /// The string is searched from getLastMatchEnd() to the search limit to find a substring that
-        /// matches a pattern in the given DFA.
+        /// The string is searched from <see cref="LastMatchEnd"/> to the search limit to find a
+        /// substring that matches a pattern in the given DFA.
         ///
         /// If there is a match, then the LastMatchStart and LastMatchEnd positions are set to the
-        /// start and end of the first match, and the MATCHRESULT that the DFA produces for that
-        /// match is returned.
+        /// start and end of the first match, and the <typeparamref name="TResult" /> that the
+        /// DFA produces for that match is returned.
         ///
         /// If there is more than one match starting at the same position, the longest one is selected.
         /// </summary>
         /// <param name="state">The start state of the DFA for the patterns you want to find</param>
-        /// <returns>The TResult for the next non-empty match in the string, or null if there isn't one</returns>
-        public TResult FindNext(DfaState<TResult> state)
+        /// <param name="val">The <typeparamref name="TResult"/> that the DFA produces for the match</param>
+        /// <returns>True if there is a next non-empty match in the string, or false if there isn't one</returns>
+        public bool FindNext(DfaState<TResult> state, out TResult val)
         {
-            for (var pos = lastMatchEnd; pos < limit; ++pos)
+            val = default;
+            for (var pos = LastMatchEnd; pos < limit; ++pos)
             {
-                var ret = MatchAt(state, pos);
-                if (ret != null)
+                if (MatchAt(state, pos, out val))
                 {
-                    return ret;
+                    return true;
                 }
             }
 
-            return default;
+            return false;
         }
 
         /// <summary>
         /// Find the longest match starting at a given position.
         ///
-        /// If there is a non-empty match for the DFA in the source string starting at
-        /// startPos, then the LastMatchStart position is set to startPos, the
-        /// LastMatchEnd position is set to the end of the longest such match, and
-        /// the TResult from that match is returned.
+        /// If there is a non-empty match for the DFA in the source string starting at startPos,
+        /// then the LastMatchStart position is set to startPos, the LastMatchEnd position is set
+        /// to the end of the longest such match, and the TResult from that match is returned.
         /// </summary>
         /// <param name="state">The start state of the DFA for the patterns you want to match</param>
         /// <param name="startPos">the position in the source string to test for a match</param>
-        /// <returns>If the source string matches a pattern in the DFA at startPos, the TResult that
-        /// the pattern match produces.  Otherwise null.</returns>
-        public TResult MatchAt(DfaState<TResult> state, int startPos)
+        /// <param name="val">The TResult that the pattern matches</param>
+        /// <returns>True if the source string matches a pattern in the DFA at startPos. Otherwise false.</returns>
+        public bool MatchAt(DfaState<TResult> state, int startPos, out TResult val)
         {
-            TResult ret = default;
+            val = default;
+            var ret = false;
             var newNmmSize = 0;
             var writeNmmNext = startPos + 4;
 
@@ -182,11 +182,11 @@ namespace CodeHive.DfaLex
                     break;
                 }
 
-                var match = state.GetMatch();
-                if (!EqualityComparer<TResult>.Default.Equals(match, default))
+                if (state.IsAccepting)
                 {
-                    ret = match;
-                    lastMatchEnd = pos;
+                    ret = true;
+                    val = state.Match;
+                    LastMatchEnd = pos;
                     newNmmSize = 0;
                     continue;
                 }
@@ -196,7 +196,7 @@ namespace CodeHive.DfaLex
                 //Many DFAs simply don't have long sequences of non-accepting states, so we only
                 //want to incur this overhead when we're actually in a non-accepting state
                 bool exitPosLoop = false;
-                while (!exitPosLoop && nmmStart < nmmSize && nmmPositions[nmmStart] <= pos)
+                while (!exitPosLoop && nmmStart < NmmSize && nmmPositions[nmmStart] <= pos)
                 {
                     if (nmmPositions[nmmStart] == pos && nmmStates[nmmStart] == state)
                     {
@@ -213,7 +213,7 @@ namespace CodeHive.DfaLex
                     break;
                 }
 
-                if (pos >= writeNmmNext && newNmmSize < nmmSize)
+                if (pos >= writeNmmNext && newNmmSize < NmmSize)
                 {
                     nmmPositions[newNmmSize] = pos;
                     nmmStates[newNmmSize] = state;
@@ -227,7 +227,7 @@ namespace CodeHive.DfaLex
             }
 
             //successful or not, we're done.  Merge in our new entries for the non-matching memo
-            while (nmmStart < nmmSize && nmmPositions[nmmStart] < writeNmmNext)
+            while (nmmStart < NmmSize && nmmPositions[nmmStart] < writeNmmNext)
             {
                 ++nmmStart;
             }
@@ -240,34 +240,42 @@ namespace CodeHive.DfaLex
                 nmmStates[nmmStart] = nmmStates[newNmmSize];
             }
 
-            if (ret != null)
+            if (ret)
             {
-                lastMatchStart = startPos;
+                LastMatchStart = startPos;
             }
 
             return ret;
         }
 
         /// <summary>
-        ///See if a whole string matches a DFA
+        /// See if a whole string matches a DFA
         /// </summary>
         /// <param name="state">DFA start state</param>
         /// <param name="str">string to test</param>
-        /// <returns>If the whole string matches the DFA, this is the match result produced.  Otherwise null.</returns>
-        public static TResult MatchWholeString(DfaState<TResult> state, string str)
+        /// <param name="val">The TResult the match result produced</param>
+        /// <returns>True if the whole string matches the DFA.  Otherwise false.</returns>
+        public static bool MatchWholeString(DfaState<TResult> state, string str, out TResult val)
         {
+            val = default;
             var len = str.Length;
             for (var i = 0; i < len; i++)
             {
                 if (state == null)
                 {
-                    return default;
+                    return false;
                 }
 
                 state = state.GetNextState(str[i]);
             }
 
-            return state == null ? default : state.GetMatch();
+            if (state == null || !state.IsAccepting)
+            {
+                return false;
+            }
+
+            val = state.Match;
+            return true;
         }
     }
 }

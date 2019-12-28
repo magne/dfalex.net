@@ -25,7 +25,7 @@ namespace CodeHive.DfaLex
     /// When it's possible for a single string to match patterns that produce different results, the ambiguity resolver
     /// is called to determine what the result should be.
     ///
-    /// The implementation can throw a <see cref="DfaAmbiguityException"/> in this case, or can combine the multiple
+    /// The implementation can throw a <see cref="DfaAmbiguityException{TResult}"/> in this case, or can combine the multiple
     /// result objects into a single object if its type (e.g., EnumSet) permits.
     /// </summary>
     /// <param name="accepts">The accept results ambiguities to resolve</param>

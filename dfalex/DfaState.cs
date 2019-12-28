@@ -35,11 +35,16 @@ namespace CodeHive.DfaLex
         public abstract DfaState<TResult> GetNextState(char ch);
 
         /// <summary>
-        /// Get the result that has been matched if we've transitioned into this state.
+        /// If the sequence of characters that led to this state match a pattern in the language being processed,
+        /// <c>true</c> is returned. Otherwise <c>false</c>.
         /// </summary>
-        /// <returns>If the sequence of characters that led to this state match a pattern in the language being processed,
-        /// the match result for that pattern is returned. Otherwise null.</returns>
-        public abstract TResult GetMatch();
+        public abstract bool IsAccepting { get; }
+
+        /// <summary>
+        /// If <see cref="IsAccepting"/> is <c>true</c>, return the match result for that pattern.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">If called when <see cref="IsAccepting"/> is <c>false</c>.</exception>
+        public abstract TResult Match { get; }
 
         /// <summary>
         /// Get the state number.  All states reachable from the output of a single call to a <see cref="DfaBuilder{TResult}"/>

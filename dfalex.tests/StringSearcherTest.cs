@@ -12,7 +12,7 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void Test()
         {
-            var builder = new DfaBuilder<JavaToken?>();
+            var builder = new DfaBuilder<JavaToken>();
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
                 builder.AddPattern(tok.Pattern(), tok);
@@ -28,7 +28,7 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void TestSingleToken()
         {
-            var builder = new DfaBuilder<JavaToken?>();
+            var builder = new DfaBuilder<JavaToken>();
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
                 builder.AddPattern(tok.Pattern(), tok);
@@ -49,7 +49,7 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void TestSeparateAccentedCharacters()
         {
-            var builder = new DfaBuilder<AccentedChar?>();
+            var builder = new DfaBuilder<AccentedChar>();
             builder.AddPattern(Pattern.Match("Les Mise\u0301rables"), AccentedChar.Miserable);
 
             var searcher = builder.BuildStringSearcher(null);
@@ -78,7 +78,7 @@ namespace CodeHive.DfaLex.Tests
 
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
-                builder.AddReplacement(tok.Pattern(), (dest, src, s, e) => TokenReplace<JavaToken>(dest, tok, src, s, e));
+                builder.AddReplacement(tok.Pattern(), (dest, src, s, e) => TokenReplace(dest, tok, src, s, e));
             }
 
             var replacer = builder.BuildStringReplacer();
@@ -178,7 +178,7 @@ namespace CodeHive.DfaLex.Tests
             Assert.Equal(want, have);
         }
 
-        private static int TokenReplace<TToken>(IAppendable dest, TToken? mr, string src, int startPos, int endPos) where TToken : struct
+        private static int TokenReplace<TToken>(IAppendable dest, TToken mr, string src, int startPos, int endPos) where TToken : struct
         {
             dest.Append("[").Append(mr.ToString()).Append("=").Append(src, startPos, endPos).Append("]");
             return 0;

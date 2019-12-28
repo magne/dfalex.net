@@ -300,13 +300,14 @@ namespace CodeHive.DfaLex
             {
                 var childi = child.GetStateNumber();
                 var cycle = cycleNumbers[childi];
+                var match = child.IsAccepting ? child.Match : (object) null;
                 if (cycle >= 0)
                 {
-                    cycleDestinies[cycle] = DestinyMerge(cycleDestinies[cycle], child.GetMatch());
+                    cycleDestinies[cycle] = DestinyMerge(cycleDestinies[cycle], match);
                 }
                 else
                 {
-                    destinies[childi] = child.GetMatch();
+                    destinies[childi] = match;
                 }
             };
             Action<DfaState<TResult>, DfaState<TResult>> onMerge = (parent, child) =>

@@ -30,6 +30,10 @@
     <EmbeddedResource Include="SearcherTestInput2.txt" />
     <None Remove="SearcherTestOutput.txt" />
     <EmbeddedResource Include="SearcherTestOutput.txt" />
+    <None Remove="StructTests-1.txt" />
+    <EmbeddedResource Include="StructTests-1.txt" />
+    <None Remove="StructTests-2.txt" />
+    <EmbeddedResource Include="StructTests-2.txt" />
   </ItemGroup>
 
 </Project>

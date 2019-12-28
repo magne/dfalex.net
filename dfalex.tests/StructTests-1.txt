@@ -1,0 +1,19 @@
+S0
+    A-Z -> S1:Id
+    a-h -> S1:Id
+    i -> S2:Id
+    j-z -> S1:Id
+S1:Id
+    0-9 -> S1:Id
+    A-Z -> S1:Id
+    a-z -> S1:Id
+S2:Id
+    0-9 -> S1:Id
+    A-Z -> S1:Id
+    a-e -> S1:Id
+    f -> S3:If
+    g-z -> S1:Id
+S3:If
+    0-9 -> S1:Id
+    A-Z -> S1:Id
+    a-z -> S1:Id

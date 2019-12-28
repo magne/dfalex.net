@@ -86,11 +86,11 @@ namespace CodeHive.DfaLex.Tests
 
         private string PToString(IMatchable p)
         {
-            var builder = new DfaBuilder<bool?>();
+            var builder = new DfaBuilder<bool>();
             builder.AddPattern(p, true);
             var dfa = builder.Build(null);
             var w = new StringWriter();
-            var printer = new PrettyPrinter<bool?>();
+            var printer = new PrettyPrinter<bool>();
             printer.Print(w, dfa);
             return w.ToString();
         }

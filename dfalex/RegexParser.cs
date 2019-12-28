@@ -118,7 +118,7 @@ namespace CodeHive.DfaLex
                 }
 
                 //get the reduction action at the end of the symbol stack
-                var action = st.GetMatch();
+                var action = st.IsAccepting ? st.Match : null;
 
                 //if we can lex and then reduce, do that instead
                 var lexState = st.GetNextState(':');
@@ -133,9 +133,9 @@ namespace CodeHive.DfaLex
                         }
 
                         maxpos = i + 1;
-                        if (lexState.GetMatch() != null)
+                        if (lexState.IsAccepting)
                         {
-                            action = lexState.GetMatch();
+                            action = lexState.Match;
                             readPos = i + 1;
                         }
                     }

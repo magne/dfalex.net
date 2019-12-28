@@ -26,9 +26,9 @@ namespace CodeHive.DfaLex.Tests
 
             var by3 = Pattern.MaybeRepeat(Pattern.AnyOf(d0, d1.Then(d2), plus2.Then(minus2)));
 
-            var builder = new DfaBuilder<bool?>();
+            var builder = new DfaBuilder<bool>();
             builder.AddPattern(by3, true);
-            var start = builder.Build(new HashSet<bool?> { true }, null);
+            var start = builder.Build(new HashSet<bool> { true }, null);
             Assert.Equal(3, CountStates(start));
             CheckDfa(start, "By3Test.out.txt", false);
         }

@@ -4,6 +4,8 @@
 [Oo]bj/
 BenchmarkDotNet.Artifacts/
 
+*.DotSettings.user
+
 Thumbs.db
 Desktop.ini
 .DS_Store

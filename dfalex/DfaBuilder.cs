@@ -36,7 +36,7 @@ namespace CodeHive.DfaLex
     /// for that pattern set. Each character of a string can be passed in turn to <see cref="DfaState{TResult}.GetNextState"/>,
     /// which will return a new <see cref="DfaState{TResult}"/>.
     ///
-    /// <see cref="DfaState{TResult}.GetMatch"/> can be called at any time to get the TResult (if any) for the patterns that
+    /// <see cref="DfaState{TResult}.Match"/> can be called at any time to get the TResult (if any) for the patterns that
     /// match the characters processed so far.
     ///
     /// A <see cref="DfaState{TResult}"/> can be used with a <see cref="StringMatcher{TResult}"/> to find instances of patterns
@@ -54,8 +54,8 @@ namespace CodeHive.DfaLex
     public class DfaBuilder<TResult>
     {
         //dfa types for cache keys
-        private static readonly int DFATYPE_MATCHER       = 0;
-        private static readonly int DFATYPE_REVERSEFINDER = 1;
+        private const int DfaTypeMatcher = 0;
+        private const int DfaTypeReverseFinder = 1;
 
         private readonly IBuilderCache                         cache;
         private readonly Dictionary<TResult, List<IMatchable>> patterns = new Dictionary<TResult, List<IMatchable>>();
@@ -67,7 +67,7 @@ namespace CodeHive.DfaLex
         { }
 
         /// <summary>
-        ///Create a new DfaBuilder, with a builder cache to bypass recalculation of pre-built DFAs.
+        /// Create a new DfaBuilder, with a builder cache to bypass recalculation of pre-built DFAs.
         /// </summary>
         /// <param name="cache">The IBuilderCache to use</param>
         public DfaBuilder(IBuilderCache cache)
@@ -100,8 +100,8 @@ namespace CodeHive.DfaLex
         /// The resulting DFA matches ALL patterns that have been added to this builder.
         /// </summary>
         /// <param name="ambiguityResolver">When patterns for multiple results match the same string, this is called to
-        /// combine the multiple results into one. If this is null, then a <see cref="DfaAmbiguityException"/> will be
-        /// thrown in that case.</param>
+        /// combine the multiple results into one. If this is null, then a <see cref="DfaAmbiguityException{TResult}"/>
+        /// will be thrown in that case.</param>
         /// <returns>The start state for a DFA that matches the set of patterns in language</returns>
         public DfaState<TResult> Build(DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
@@ -152,7 +152,7 @@ namespace CodeHive.DfaLex
             }
             else
             {
-                var cacheKey = GetCacheKey(DFATYPE_MATCHER, languages, ambiguityResolver);
+                var cacheKey = GetCacheKey(DfaTypeMatcher, languages, ambiguityResolver);
                 serializableDfa = (SerializableDfa<TResult>) cache.GetCachedItem(cacheKey);
                 if (serializableDfa == null)
                 {
@@ -223,14 +223,14 @@ namespace CodeHive.DfaLex
                 return new List<DfaState<bool>>();
             }
 
-            SerializableDfa<bool> serializableDfa = null;
+            SerializableDfa<bool> serializableDfa;
             if (cache == null)
             {
                 serializableDfa = _buildReverseFinders(languages);
             }
             else
             {
-                var cacheKey = GetCacheKey(DFATYPE_REVERSEFINDER, languages, null);
+                var cacheKey = GetCacheKey(DfaTypeReverseFinder, languages, null);
                 serializableDfa = (SerializableDfa<bool>) cache.GetCachedItem(cacheKey);
                 if (serializableDfa == null)
                 {
@@ -420,10 +420,7 @@ namespace CodeHive.DfaLex
                 nfaStartStates[i] = nfa.AddState();
             }
 
-            if (ambiguityResolver == null)
-            {
-                ambiguityResolver = DefaultAmbiguityResolver;
-            }
+            ambiguityResolver ??= DefaultAmbiguityResolver;
 
             foreach (var patEntry in patterns)
             {

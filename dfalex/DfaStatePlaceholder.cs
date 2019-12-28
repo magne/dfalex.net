@@ -64,10 +64,9 @@ namespace CodeHive.DfaLex
             return Delegate.GetNextState(c);
         }
 
-        public sealed override TResult GetMatch()
-        {
-            return Delegate.GetMatch();
-        }
+        public sealed override bool IsAccepting => Delegate.IsAccepting;
+
+        public sealed override TResult Match => Delegate.Match;
 
         public sealed override void EnumerateTransitions(DfaTransitionConsumer<TResult> consumer)
         {

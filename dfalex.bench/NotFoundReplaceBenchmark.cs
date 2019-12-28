@@ -12,7 +12,7 @@ namespace CodeHive.DfaLex.Bench
         private readonly string               src;
         private readonly Regex                dotnetPat;
         private readonly Func<string, string> replacer;
-        private readonly DfaState<bool?>      startState;
+        private readonly DfaState<bool>       startState;
 
         public NotFoundReplaceBenchmark()
         {
@@ -33,7 +33,7 @@ namespace CodeHive.DfaLex.Bench
             }
 
             {
-                var builder = new DfaBuilder<bool?>();
+                var builder = new DfaBuilder<bool>();
                 builder.AddPattern(DfaLex.Pattern.Regex(Pattern), true);
                 startState = builder.Build(null);
             }
@@ -42,20 +42,20 @@ namespace CodeHive.DfaLex.Bench
         [Benchmark]
         public void DotNetRegex()
         {
-            var str = dotnetPat.Replace(src, string.Empty);
+            dotnetPat.Replace(src, string.Empty);
         }
 
         [Benchmark]
         public void SearchAndReplaceBuilder()
         {
-            var str = replacer(src);
+            replacer(src);
         }
 
         [Benchmark]
         public void Matcher()
         {
-            var m = new StringMatcher<bool?>(src);
-            if (m.FindNext(startState) != null)
+            var m = new StringMatcher<bool>(src);
+            if (m.FindNext(startState, out _))
             {
                 throw new Exception("not supposed to find a match");
             }

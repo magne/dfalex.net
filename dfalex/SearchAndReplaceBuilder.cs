@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CodeHive.DfaLex
 {
@@ -39,9 +40,9 @@ namespace CodeHive.DfaLex
     /// </summary>
     public class SearchAndReplaceBuilder
     {
-        private readonly DfaBuilder<int?>        dfaBuilder;
+        private readonly DfaBuilder<int>         dfaBuilder;
         private readonly List<StringReplacement> replacements = new List<StringReplacement>();
-        private          DfaState<int?>          dfaMemo;
+        private          DfaState<int>          dfaMemo;
         private          DfaState<bool>          reverseFinderMemo;
 
         /// <summary>
@@ -49,7 +50,7 @@ namespace CodeHive.DfaLex
         /// </summary>
         public SearchAndReplaceBuilder()
         {
-            dfaBuilder = new DfaBuilder<int?>();
+            dfaBuilder = new DfaBuilder<int>();
         }
 
         /// <summary>
@@ -58,7 +59,7 @@ namespace CodeHive.DfaLex
         /// <param name="cache">The BuilderCache to use</param>
         public SearchAndReplaceBuilder(IBuilderCache cache)
         {
-            dfaBuilder = new DfaBuilder<int?>(cache);
+            dfaBuilder = new DfaBuilder<int>(cache);
         }
 
         /// <summary>
@@ -147,7 +148,7 @@ namespace CodeHive.DfaLex
                 reverseFinderMemo = dfaBuilder.BuildReverseFinder();
             }
 
-            var searcher = new StringSearcher<int?>(dfaMemo, reverseFinderMemo);
+            var searcher = new StringSearcher<int>(dfaMemo, reverseFinderMemo);
             var replacer = new StringSearcherReplacer(replacements).ReplacementSelector;
             return (str => searcher.FindAndReplace(str, replacer));
         }
@@ -170,18 +171,9 @@ namespace CodeHive.DfaLex
             reverseFinderMemo = null;
         }
 
-        private static int? AmbiguityResolver(ISet<int?> candidates)
+        private static int AmbiguityResolver(ISet<int> candidates)
         {
-            int? ret = null;
-            foreach (var c in candidates)
-            {
-                if (ret == null || c < ret)
-                {
-                    ret = c;
-                }
-            }
-
-            return ret;
+            return candidates.Min();
         }
 
         private class StringSearcherReplacer
@@ -193,7 +185,7 @@ namespace CodeHive.DfaLex
                 this.replacements = replacements.ToArray();
             }
 
-            public ReplacementSelector<int?> ReplacementSelector => (dest, mr, src, pos, endPos) => replacements[mr.Value](dest, src, pos, endPos);
+            public ReplacementSelector<int> ReplacementSelector => (dest, mr, src, pos, endPos) => replacements[mr](dest, src, pos, endPos);
         }
     }
 }

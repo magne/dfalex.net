@@ -32,9 +32,9 @@ namespace CodeHive.DfaLex.Tests
             {
                 slowDestinies.Add(new HashSet<JavaToken?>());
                 var state = states[i];
-                if (state.GetMatch() != null)
+                if (state.IsAccepting)
                 {
-                    slowDestinies[i].Add(state.GetMatch());
+                    slowDestinies[i].Add(state.Match);
                 }
             }
 

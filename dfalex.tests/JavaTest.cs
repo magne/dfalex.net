@@ -15,13 +15,13 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void Test()
         {
-            var builder = new DfaBuilder<JavaToken?>();
+            var builder = new DfaBuilder<JavaToken>();
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
                 builder.AddPattern(tok.Pattern(), tok);
             }
 
-            var start = builder.Build(new HashSet<JavaToken?>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken?>()), null);
+            var start = builder.Build(new HashSet<JavaToken>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken>()), null);
 
             CheckDfa(start, "JavaTest.out.txt", false);
         }

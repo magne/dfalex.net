@@ -87,7 +87,7 @@ namespace CodeHive.DfaLex.Tests
 
                     target = target.GetNextState(cmin);
                     var nexttrans = GetTransitionChars(target);
-                    if (nexttrans.Length == 2 && target.GetMatch() == null)
+                    if (nexttrans.Length == 2 && !target.IsAccepting)
                     {
                         cmin = nexttrans[0];
                         cmax = nexttrans[1];
@@ -104,10 +104,10 @@ namespace CodeHive.DfaLex.Tests
         private void PrintStateDot(TextWriter w, DfaState<T> state)
         {
             var stateName = names[state];
-            if (state.GetMatch() != null)
+            if (state.IsAccepting)
             {
                 // Accept states are double circles
-                w.WriteLine($"{stateName}[label=\"{stateName}\n{state.GetMatch()}\",peripheries=2]");
+                w.WriteLine($"{stateName}[label=\"{stateName}\n{state.Match}\",peripheries=2]");
             }
 
             var trans = GetTransitionChars(state);
@@ -137,16 +137,15 @@ namespace CodeHive.DfaLex.Tests
         {
             if (!names.TryGetValue(state, out var ret))
             {
-                var accept = state.GetMatch();
                 var nameNum = (useStateNumbers ? state.GetStateNumber() : nextStateNum);
                 ++nextStateNum;
-                if (accept == null || !appendMatch)
+                if (!state.IsAccepting || !appendMatch)
                 {
                     ret = "S" + nameNum;
                 }
                 else
                 {
-                    ret = "S" + nameNum + ":" + accept;
+                    ret = "S" + nameNum + ":" + state.Match;
                 }
 
                 names.Add(state, ret);

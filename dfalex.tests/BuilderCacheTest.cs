@@ -19,7 +19,7 @@ namespace CodeHive.DfaLex.Tests
         {
             var cache = new InMemoryBuilderCache();
 
-            var builder = new DfaBuilder<JavaToken?>(cache);
+            var builder = new DfaBuilder<JavaToken>(cache);
             Build(builder);
             Assert.Equal(1, cache.Cache.Count);
             Assert.Equal(0, cache.Hits);
@@ -29,20 +29,20 @@ namespace CodeHive.DfaLex.Tests
             Assert.Equal(1, cache.Cache.Count);
             Assert.Equal(1, cache.Hits);
 
-            builder = new DfaBuilder<JavaToken?>(cache);
+            builder = new DfaBuilder<JavaToken>(cache);
             Build(builder);
             Assert.Equal(1, cache.Cache.Count);
             Assert.Equal(2, cache.Hits);
         }
 
-        private void Build(DfaBuilder<JavaToken?> builder)
+        private void Build(DfaBuilder<JavaToken> builder)
         {
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
                 builder.AddPattern(tok.Pattern(), tok);
             }
 
-            var lang = new HashSet<JavaToken?>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken?>());
+            var lang = new HashSet<JavaToken>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken>());
             var start = builder.Build(lang, null);
             CheckDfa(start, "JavaTest.out.txt", false);
         }

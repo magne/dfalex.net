@@ -95,7 +95,7 @@ namespace CodeHive.DfaLex.Tests
         private void Check()
         {
             var nStates = states.Count;
-            var starts = new List<DfaState<int?>>();
+            var starts = new List<DfaState<int>>();
             //find roots that cover all the states
             {
                 var reached = new bool[states.Count];
@@ -132,7 +132,7 @@ namespace CodeHive.DfaLex.Tests
                 }
             }
 
-            var auzInfo = new DfaAuxiliaryInformation<int?>(starts);
+            var auzInfo = new DfaAuxiliaryInformation<int>(starts);
             var gotCycles = auzInfo.GetCycleNumbers();
             Assert.Equal(nStates, gotCycles.Length);
             for (var i = 0; i < nStates; i++)
@@ -152,9 +152,9 @@ namespace CodeHive.DfaLex.Tests
             }
         }
 
-        private class State : DfaState<int?>
+        private class State : DfaState<int>
         {
-            private readonly  List<DfaState<int?>> transitions = new List<DfaState<int?>>();
+            private readonly  List<DfaState<int>> transitions = new List<DfaState<int>>();
             private readonly  int?                 accept;
             internal readonly int                  Number;
 
@@ -164,7 +164,7 @@ namespace CodeHive.DfaLex.Tests
                 Number = number;
             }
 
-            public void Link(DfaState<int?> target)
+            public void Link(DfaState<int> target)
             {
                 transitions.Add(target);
             }
@@ -183,7 +183,7 @@ namespace CodeHive.DfaLex.Tests
                 }
             }
 
-            public override DfaState<int?> GetNextState(char ch)
+            public override DfaState<int> GetNextState(char ch)
             {
                 if (ch <= transitions.Count)
                 {
@@ -193,17 +193,16 @@ namespace CodeHive.DfaLex.Tests
                 return null;
             }
 
-            public override int? GetMatch()
-            {
-                return accept;
-            }
+            public override bool IsAccepting => accept.HasValue;
+
+            public override int Match => accept.Value;
 
             public override int GetStateNumber()
             {
                 return Number;
             }
 
-            public override void EnumerateTransitions(DfaTransitionConsumer<int?> consumer)
+            public override void EnumerateTransitions(DfaTransitionConsumer<int> consumer)
             {
                 for (var i = 0; i < transitions.Count; ++i)
                 {
@@ -211,7 +210,7 @@ namespace CodeHive.DfaLex.Tests
                 }
             }
 
-            public override IEnumerable<DfaState<int?>> GetSuccessorStates()
+            public override IEnumerable<DfaState<int>> GetSuccessorStates()
             {
                 return transitions;
             }

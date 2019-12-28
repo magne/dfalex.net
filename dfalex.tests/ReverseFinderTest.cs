@@ -18,7 +18,7 @@ namespace CodeHive.DfaLex.Tests
             var wantStart = revBuilder.Build(null);
             var want = _toString(wantStart);
 
-            var builder = new DfaBuilder<JavaToken?>();
+            var builder = new DfaBuilder<JavaToken>();
             foreach (JavaToken tok in Enum.GetValues(typeof(JavaToken)))
             {
                 builder.AddPattern(tok.Pattern(), tok);
@@ -47,7 +47,7 @@ namespace CodeHive.DfaLex.Tests
             Assert.Equal(want, have);
         }
 
-        private string _toString(DfaState<bool> dfa)
+        private static string _toString(DfaState<bool> dfa)
         {
             var w = new StringWriter();
             var printer = new PrettyPrinter<bool>();

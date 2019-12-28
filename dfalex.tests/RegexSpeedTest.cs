@@ -89,9 +89,9 @@ namespace CodeHive.DfaLex.Tests
 
         private int TimeMatcher(string src, string patString)
         {
-            DfaState<bool?> startState;
+            DfaState<bool> startState;
             {
-                var builder = new DfaBuilder<bool?>();
+                var builder = new DfaBuilder<bool>();
                 builder.AddPattern(Pattern.Regex(patString), true);
                 startState = builder.Build(null);
             }
@@ -101,8 +101,8 @@ namespace CodeHive.DfaLex.Tests
             stopWatch.Start();
             for (var t = stopWatch.ElapsedMilliseconds; t < SpinUp + 1000; t = stopWatch.ElapsedMilliseconds)
             {
-                var m = new StringMatcher<bool?>(src);
-                if (m.FindNext(startState) != null)
+                var m = new StringMatcher<bool>(src);
+                if (m.FindNext(startState, out _))
                 {
                     throw new Exception("not supposed to find a match");
                 }

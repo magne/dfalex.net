@@ -25,16 +25,16 @@ namespace CodeHive.DfaLex
     /// <typeparam name="TResult"></typeparam>
     internal class RawDfa<TResult>
     {
-        private readonly List<DfaStateInfo> dfaStates;
-        private readonly List<TResult>      acceptSets;
-        private readonly int[]              startStates;
+        private readonly List<DfaStateInfo>    dfaStates;
+        private readonly List<(bool, TResult)> acceptSets;
+        private readonly int[]                 startStates;
 
         /// <summary>
         /// Create a new RawDfa.
         /// </summary>
         public RawDfa(List<DfaStateInfo> dfaStates,
-                      List<TResult> acceptSets,
-                      int[] startStates)
+            List<(bool, TResult)> acceptSets,
+            int[] startStates)
         {
             this.dfaStates = dfaStates;
             this.acceptSets = acceptSets;
@@ -43,7 +43,7 @@ namespace CodeHive.DfaLex
 
         public List<DfaStateInfo> States => dfaStates;
 
-        public List<TResult> AcceptSets => acceptSets;
+        public List<(bool, TResult)> AcceptSets => acceptSets;
 
         public int[] StartStates => startStates;
     }

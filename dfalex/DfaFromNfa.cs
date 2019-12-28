@@ -42,7 +42,7 @@ namespace CodeHive.DfaLex
 
         //accumulators
         private readonly Dictionary<TResult, int> acceptSetMap = new Dictionary<TResult, int>();
-        private readonly List<TResult>            acceptSets   = new List<TResult>();
+        private readonly List<(bool, TResult)>    acceptSets   = new List<(bool, TResult)>();
 
         private readonly Dictionary<IntListKey, int> dfaStateSignatureMap = new Dictionary<IntListKey, int>();
         private readonly List<IntListKey>            dfaStateSignatures   = new List<IntListKey>();
@@ -54,7 +54,7 @@ namespace CodeHive.DfaLex
             this.nfaStartStates = nfaStartStates;
             dfaStartStates = new int[nfaStartStates.Length];
             this.ambiguityResolver = ambiguityResolver;
-            acceptSets.Add(default);
+            acceptSets.Add((false, default));
             Build();
         }
 
@@ -178,7 +178,7 @@ namespace CodeHive.DfaLex
                 }
 
                 //INVARIANT: m_dfaStatesOut.size() == stateNum
-                dfaStates.Add(_createStateInfo(dfaStateSig, dfaStateTransitions));
+                dfaStates.Add(CreateStateInfo(dfaStateSig, dfaStateTransitions));
             }
         }
 
@@ -233,7 +233,7 @@ namespace CodeHive.DfaLex
             return dfaStateNum;
         }
 
-        private DfaStateInfo _createStateInfo(IntListKey sig, List<NfaTransition> transitions)
+        private DfaStateInfo CreateStateInfo(IntListKey sig, List<NfaTransition> transitions)
         {
             //calculate the set of accepts
             tempResultSet.Clear();
@@ -245,27 +245,32 @@ namespace CodeHive.DfaLex
                     {
                         tempResultSet.Add(accept);
                     }
+
+                    if (nfa.IsAccepting(nfastate))
+                    {
+                        tempResultSet.Add(nfa.GetAccept(nfastate));
+                    }
                 });
 
             //and get an accept set index for it
-            TResult dfaAccept = default;
+            (bool accepting, TResult accept) dfaAccept = (false, default);
             if (tempResultSet.Count > 1)
             {
-                dfaAccept = ambiguityResolver(tempResultSet);
+                dfaAccept = (true, ambiguityResolver(tempResultSet));
             }
             else if (tempResultSet.Count != 0)
             {
-                dfaAccept = tempResultSet.First();
+                dfaAccept = (true, tempResultSet.Single());
             }
 
             var acceptSetIndex = 0;
-            if (dfaAccept != null)
+            if (dfaAccept.accepting)
             {
-                if (!acceptSetMap.TryGetValue(dfaAccept, out acceptSetIndex))
+                if (!acceptSetMap.TryGetValue(dfaAccept.accept, out acceptSetIndex))
                 {
                     acceptSets.Add(dfaAccept);
                     acceptSetIndex = acceptSets.Count - 1;
-                    acceptSetMap[dfaAccept] = acceptSetIndex;
+                    acceptSetMap[dfaAccept.accept] = acceptSetIndex;
                 }
             }
 

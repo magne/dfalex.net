@@ -18,7 +18,7 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void TestTo100K()
         {
-            var builder = new DfaBuilder<int?>();
+            var builder = new DfaBuilder<int>();
             for (var i = 0; i < 100000; ++i)
             {
                 builder.AddPattern(Pattern.Match(i.ToString()), i % 7);
@@ -31,11 +31,12 @@ namespace CodeHive.DfaLex.Tests
             stopWatch.Stop();
             var telapsed = stopWatch.ElapsedMilliseconds;
             helper.WriteLine($"Mininmized 100000 numbers -> value mod 7 (down to {numstates} states) in {telapsed * .001} seconds");
-            Assert.Equal(null, StringMatcher<int?>.MatchWholeString(start, ""));
-            Assert.Equal(null, StringMatcher<int?>.MatchWholeString(start, "100001"));
+            Assert.False(StringMatcher<int>.MatchWholeString(start, "", out _));
+            Assert.False(StringMatcher<int>.MatchWholeString(start, "100001", out _));
             for (var i = 0; i < 100000; ++i)
             {
-                Assert.Equal(i % 7, StringMatcher<int?>.MatchWholeString(start, i.ToString()));
+                Assert.True(StringMatcher<int>.MatchWholeString(start, i.ToString(), out var result));
+                Assert.Equal(i % 7, result);
             }
 
             Assert.Equal(36, numstates);
@@ -44,29 +45,29 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void TestSimultaneousLanguages()
         {
-            var builder = new DfaBuilder<int?>();
+            var builder = new DfaBuilder<int>();
             for (var i = 0; i < 100000; ++i)
             {
-                if ((i % 21) == 0)
+                if (i % 21 == 0)
                 {
                     builder.AddPattern(Pattern.Match(i.ToString()), 3);
                 }
-                else if ((i % 3) == 0)
+                else if (i % 3 == 0)
                 {
                     builder.AddPattern(Pattern.Match(i.ToString()), 1);
                 }
-                else if ((i % 7) == 0)
+                else if (i % 7 == 0)
                 {
                     builder.AddPattern(Pattern.Match(i.ToString()), 2);
                 }
             }
 
-            var langs = new List<ISet<int?>>();
+            var langs = new List<ISet<int>>();
             {
-                var s1 = new HashSet<int?>();
+                var s1 = new HashSet<int>();
                 s1.Add(1);
                 s1.Add(3);
-                var s2 = new HashSet<int?>();
+                var s2 = new HashSet<int>();
                 s2.Add(2);
                 s2.Add(3);
                 langs.Add(s1);
@@ -80,23 +81,27 @@ namespace CodeHive.DfaLex.Tests
             var numstates = CountStates(start3, start7);
             stopWatch.Stop();
             var telapsed = stopWatch.ElapsedMilliseconds;
-            helper.WriteLine($"Mininmized 1000000 numbers -> divisible by 7 and 3 (down to {numstates} states) in {telapsed * .001} seconds");
+            helper.WriteLine($"Minimized 1000000 numbers -> divisible by 7 and 3 (down to {numstates} states) in {telapsed * .001} seconds");
             for (var i = 0; i < 100000; ++i)
             {
-                if ((i % 21) == 0)
+                if (i % 21 == 0)
                 {
-                    Assert.Equal((int) 3, StringMatcher<int?>.MatchWholeString(start3, i.ToString()));
-                    Assert.Equal((int) 3, StringMatcher<int?>.MatchWholeString(start7, i.ToString()));
+                    Assert.True(StringMatcher<int>.MatchWholeString(start3, i.ToString(), out var result));
+                    Assert.Equal(3, result);
+                    Assert.True(StringMatcher<int>.MatchWholeString(start7, i.ToString(), out result));
+                    Assert.Equal(3, result);
                 }
-                else if ((i % 3) == 0)
+                else if (i % 3 == 0)
                 {
-                    Assert.Equal((int) 1, StringMatcher<int?>.MatchWholeString(start3, i.ToString()));
-                    Assert.Equal(null,    StringMatcher<int?>.MatchWholeString(start7, i.ToString()));
+                    Assert.True(StringMatcher<int>.MatchWholeString(start3, i.ToString(), out var result));
+                    Assert.Equal(1, result);
+                    Assert.False(StringMatcher<int>.MatchWholeString(start7, i.ToString(), out _));
                 }
-                else if ((i % 7) == 0)
+                else if (i % 7 == 0)
                 {
-                    Assert.Equal(null,    StringMatcher<int?>.MatchWholeString(start3, i.ToString()));
-                    Assert.Equal((int) 2, StringMatcher<int?>.MatchWholeString(start7, i.ToString()));
+                    Assert.False(StringMatcher<int>.MatchWholeString(start3, i.ToString(), out _));
+                    Assert.True(StringMatcher<int>.MatchWholeString(start7, i.ToString(), out var result));
+                    Assert.Equal(2, result);
                 }
             }
 

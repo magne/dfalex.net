@@ -17,7 +17,7 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace CodeHive.DfaLex
 {
@@ -76,7 +76,7 @@ namespace CodeHive.DfaLex
                     return NoMatches;
                 }
 
-                if (finderState.GetMatch())
+                if (finderState.IsAccepting && finderState.Match)
                 {
                     break;
                 }
@@ -96,7 +96,7 @@ namespace CodeHive.DfaLex
                     break;
                 }
 
-                if (finderState.GetMatch())
+                if (finderState.IsAccepting && finderState.Match)
                 {
                     if (pos < maskStartPos)
                     {
@@ -111,7 +111,7 @@ namespace CodeHive.DfaLex
 
                         maskArray = newMask;
                         maskStartPos -= toAdd << 5;
-                        System.Diagnostics.Debug.Assert(maskStartPos <= pos);
+                        Debug.Assert(maskStartPos <= pos);
                     }
 
                     var offset = pos - maskStartPos;
@@ -195,6 +195,7 @@ namespace CodeHive.DfaLex
             private          int               nextEnd;
             private          int               prevPos;
             private          int               prevEnd;
+            private          bool              prevAccepting;
             private          TResult           prevResult;
             private          string            prevString;
 
@@ -233,7 +234,8 @@ namespace CodeHive.DfaLex
 
                 prevPos = nextPos;
                 prevEnd = nextEnd;
-                prevResult = nextEndState.GetMatch();
+                prevAccepting = nextEndState.IsAccepting;
+                prevResult = nextEndState.Match;
                 prevString = null;
                 //extend the previously found match as far as possible
                 var st = nextEndState;
@@ -246,10 +248,10 @@ namespace CodeHive.DfaLex
                         break;
                     }
 
-                    var match = st.GetMatch();
-                    if (!EqualityComparer<TResult>.Default.Equals(match, default))
+                    if (st.IsAccepting)
                     {
-                        prevResult = match;
+                        prevAccepting = st.IsAccepting;
+                        prevResult = st.Match;
                         prevEnd = pos + 1;
                     }
                 }
@@ -350,7 +352,7 @@ namespace CodeHive.DfaLex
                             break;
                         }
 
-                        if (!EqualityComparer<TResult>.Default.Equals(st.GetMatch(), default))
+                        if (st.IsAccepting)
                         {
                             //found one!
                             nextPos = tryPos;
@@ -369,7 +371,7 @@ namespace CodeHive.DfaLex
 
             private bool IsValid()
             {
-                return !EqualityComparer<TResult>.Default.Equals(prevResult, default);
+                return prevAccepting;
             }
         }
 
