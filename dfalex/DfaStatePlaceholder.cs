@@ -73,19 +73,10 @@ namespace CodeHive.DfaLex
             Delegate.EnumerateTransitions(consumer);
         }
 
-        public sealed override int GetStateNumber()
-        {
-            return Delegate.GetStateNumber();
-        }
+        public sealed override int StateNumber => Delegate.StateNumber;
 
-        public override IEnumerable<DfaState<TResult>> GetSuccessorStates()
-        {
-            return Delegate.GetSuccessorStates();
-        }
+        public override bool HasSuccessorStates => Delegate.HasSuccessorStates;
 
-        public override bool HasSuccessorStates()
-        {
-            return Delegate.HasSuccessorStates();
-        }
+        public override IEnumerable<DfaState<TResult>> SuccessorStates => Delegate.SuccessorStates;
     }
 }

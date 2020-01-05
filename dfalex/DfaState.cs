@@ -28,7 +28,7 @@ namespace CodeHive.DfaLex
     public abstract class DfaState<TResult>
     {
         /// <summary>
-        /// Process acharacter and get the next state.
+        /// Process a character and get the next state.
         /// </summary>
         /// <param name="ch">input character</param>
         /// <returns>The DfaState that ch transitions to from this one, or null if there is no such state</returns>
@@ -55,7 +55,7 @@ namespace CodeHive.DfaLex
         /// See <see cref="DfaAuxiliaryInformation{TResult}"/>
         /// </summary>
         /// <returns>this state's state number</returns>
-        public abstract int GetStateNumber();
+        public abstract int StateNumber { get; }
 
         /// <summary>
         /// Enumerate all the transitions out of this state
@@ -64,17 +64,17 @@ namespace CodeHive.DfaLex
         public abstract void EnumerateTransitions(DfaTransitionConsumer<TResult> consumer);
 
         /// <summary>
-        /// Get an <see cref="IEnumerable{T}"/> of all the successor states of this state.
-        ///
-        /// Note that the same successor state may appear more than once in the interation
-        /// </summary>
-        /// <returns>an iterable of successor states.</returns>
-        public abstract IEnumerable<DfaState<TResult>> GetSuccessorStates();
-
-        /// <summary>
         ///
         /// </summary>
         /// <returns>true if this state has any successor states</returns>
-        public abstract bool HasSuccessorStates();
+        public abstract bool HasSuccessorStates { get; }
+
+        /// <summary>
+        /// Get an <see cref="IEnumerable{T}"/> of all the successor states of this state.
+        ///
+        /// Note that the same successor state may appear more than once in the iteration
+        /// </summary>
+        /// <returns>an iterable of successor states.</returns>
+        public abstract IEnumerable<DfaState<TResult>> SuccessorStates { get; }
     }
 }

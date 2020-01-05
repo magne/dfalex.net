@@ -73,7 +73,7 @@ namespace CodeHive.DfaLex
                 {
                     if (state != null)
                     {
-                        var i = state.GetStateNumber();
+                        var i = state.StateNumber;
                         while (statesByNums.Count <= i)
                         {
                             statesByNums.Add(null);
@@ -92,7 +92,7 @@ namespace CodeHive.DfaLex
                     var state = q.Dequeue();
                     state.EnumerateTransitions((@in, @out, target) =>
                     {
-                        var i = target.GetStateNumber();
+                        var i = target.StateNumber;
                         while (statesByNums.Count <= i)
                         {
                             statesByNums.Add(null);
@@ -131,20 +131,20 @@ namespace CodeHive.DfaLex
             for (var rootIndex = 0; rootIndex < startStates.Count; ++rootIndex)
             {
                 var st = startStates[rootIndex];
-                if (iterators[st.GetStateNumber()] != null)
+                if (iterators[st.StateNumber] != null)
                 {
                     onSkip(null, st);
                     continue;
                 }
 
-                iterators[st.GetStateNumber()] = st.GetSuccessorStates().GetEnumerator();
+                iterators[st.StateNumber] = st.SuccessorStates.GetEnumerator();
                 stack.Push(st);
                 onEnter(null, st);
                 for (;;)
                 {
                     //process the next child of the stack top
                     st = stack.Peek();
-                    var sti = st.GetStateNumber();
+                    var sti = st.StateNumber;
                     var iter = iterators[sti];
                     if (iter.MoveNext())
                     {
@@ -155,14 +155,14 @@ namespace CodeHive.DfaLex
                             continue;
                         }
 
-                        var childi = child.GetStateNumber();
+                        var childi = child.StateNumber;
                         if (iterators[childi] != null)
                         {
                             onSkip(st, child);
                         }
                         else
                         {
-                            iterators[childi] = child.GetSuccessorStates().GetEnumerator();
+                            iterators[childi] = child.SuccessorStates.GetEnumerator();
                             stack.Push(child);
                             onEnter(st, child);
                         }
@@ -221,19 +221,19 @@ namespace CodeHive.DfaLex
             Action<DfaState<TResult>, DfaState<TResult>> onEnter = (parent, child) =>
             {
                 stack.Push(child);
-                backLink[child.GetStateNumber()] = orderIndex[child.GetStateNumber()] = pindex[0]++;
+                backLink[child.StateNumber] = orderIndex[child.StateNumber] = pindex[0]++;
             };
             Action<DfaState<TResult>, DfaState<TResult>> onSkip = (parent, child) =>
             {
-                var childLink = backLink[child.GetStateNumber()];
-                if (parent != null && childLink >= 0 && childLink < backLink[parent.GetStateNumber()])
+                var childLink = backLink[child.StateNumber];
+                if (parent != null && childLink >= 0 && childLink < backLink[parent.StateNumber])
                 {
-                    backLink[parent.GetStateNumber()] = childLink;
+                    backLink[parent.StateNumber] = childLink;
                 }
             };
             Action<DfaState<TResult>, DfaState<TResult>> onExit = (parent, child) =>
             {
-                var childi = child.GetStateNumber();
+                var childi = child.StateNumber;
                 var childLink = backLink[childi];
                 if (childLink == orderIndex[childi])
                 {
@@ -247,7 +247,7 @@ namespace CodeHive.DfaLex
                     for (;;)
                     {
                         var st = stack.Pop();
-                        var sti = st.GetStateNumber();
+                        var sti = st.StateNumber;
                         cycleNums[sti] = cycleNum;
                         backLink[sti] = -1;
                         if (st == child)
@@ -257,9 +257,9 @@ namespace CodeHive.DfaLex
                     }
                 }
 
-                if (parent != null && childLink >= 0 && childLink < backLink[parent.GetStateNumber()])
+                if (parent != null && childLink >= 0 && childLink < backLink[parent.StateNumber])
                 {
-                    backLink[parent.GetStateNumber()] = childLink;
+                    backLink[parent.StateNumber] = childLink;
                 }
             };
 
@@ -298,7 +298,7 @@ namespace CodeHive.DfaLex
             var cycleDestinies = new object[numCycles];
             Action<DfaState<TResult>, DfaState<TResult>> onEnter = (parent, child) =>
             {
-                var childi = child.GetStateNumber();
+                var childi = child.StateNumber;
                 var cycle = cycleNumbers[childi];
                 var match = child.IsAccepting ? child.Match : (object) null;
                 if (cycle >= 0)
@@ -314,8 +314,8 @@ namespace CodeHive.DfaLex
                 {
                     if (parent != null)
                     {
-                        var childi = child.GetStateNumber();
-                        var pari = parent.GetStateNumber();
+                        var childi = child.StateNumber;
+                        var pari = parent.StateNumber;
                         var cycle = cycleNumbers[childi];
                         var o = (cycle >= 0 ? cycleDestinies[cycle] : destinies[childi]);
                         cycle = cycleNumbers[pari];

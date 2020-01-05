@@ -102,12 +102,12 @@ namespace CodeHive.DfaLex.Tests
                 for (var i = 0; i < nStates; i++)
                 {
                     var src = states[i];
-                    foreach (var dest in src.GetSuccessorStates())
+                    foreach (var dest in src.SuccessorStates)
                     {
-                        if (cycleNumbers[src.Number] != cycleNumbers[dest.GetStateNumber()])
+                        if (cycleNumbers[src.StateNumber] != cycleNumbers[dest.StateNumber])
                         {
-                            Debug.Assert(dest.GetStateNumber() < src.Number);
-                            reached[dest.GetStateNumber()] = true;
+                            Debug.Assert(dest.StateNumber < src.StateNumber);
+                            reached[dest.StateNumber] = true;
                         }
                     }
                 }
@@ -156,12 +156,11 @@ namespace CodeHive.DfaLex.Tests
         {
             private readonly  List<DfaState<int>> transitions = new List<DfaState<int>>();
             private readonly  int?                 accept;
-            internal readonly int                  Number;
 
             public State(int number, int? accept)
             {
                 this.accept = accept;
-                Number = number;
+                StateNumber = number;
             }
 
             public void Link(DfaState<int> target)
@@ -197,10 +196,7 @@ namespace CodeHive.DfaLex.Tests
 
             public override int Match => accept.Value;
 
-            public override int GetStateNumber()
-            {
-                return Number;
-            }
+            public override int StateNumber { get; }
 
             public override void EnumerateTransitions(DfaTransitionConsumer<int> consumer)
             {
@@ -210,15 +206,9 @@ namespace CodeHive.DfaLex.Tests
                 }
             }
 
-            public override IEnumerable<DfaState<int>> GetSuccessorStates()
-            {
-                return transitions;
-            }
+            public override bool HasSuccessorStates =>  transitions.Any();
 
-            public override bool HasSuccessorStates()
-            {
-                return transitions.Any();
-            }
+            public override IEnumerable<DfaState<int>> SuccessorStates => transitions;
         }
     }
 }

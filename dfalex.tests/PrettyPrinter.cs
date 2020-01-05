@@ -137,7 +137,7 @@ namespace CodeHive.DfaLex.Tests
         {
             if (!names.TryGetValue(state, out var ret))
             {
-                var nameNum = (useStateNumbers ? state.GetStateNumber() : nextStateNum);
+                var nameNum = (useStateNumbers ? state.StateNumber : nextStateNum);
                 ++nextStateNum;
                 if (!state.IsAccepting || !appendMatch)
                 {

@@ -185,9 +185,7 @@ namespace CodeHive.DfaLex
         {
             private readonly char[]                  internalNodes;
             private readonly DfaStateImpl<TResult>[] targetStates;
-            private readonly bool                    accepting;
             private readonly TResult                 match;
-            private readonly int                     stateNum;
 
             internal StateImpl(char[] internalNodes, DfaStateImpl<TResult>[] targetStates, bool accepting, TResult match, int stateNum)
             {
@@ -201,9 +199,9 @@ namespace CodeHive.DfaLex
 
                 this.internalNodes = internalNodes;
                 this.targetStates = targetStates;
-                this.accepting = accepting;
                 this.match = match;
-                this.stateNum = stateNum;
+                IsAccepting = accepting;
+                StateNumber = stateNum;
             }
 
             internal override void FixPlaceholderReferences()
@@ -233,7 +231,7 @@ namespace CodeHive.DfaLex
                 return targetStates[i - internalNodes.Length];
             }
 
-            public override bool IsAccepting => accepting;
+            public override bool IsAccepting { get; }
 
             public override TResult Match
             {
@@ -248,15 +246,11 @@ namespace CodeHive.DfaLex
                 }
             }
 
-            public override int GetStateNumber()
-            {
-                return stateNum;
-            }
+            public override int StateNumber { get; }
 
-            public override IEnumerable<DfaState<TResult>> GetSuccessorStates()
-            {
-                return this;
-            }
+            public override bool HasSuccessorStates =>  targetStates != NoSuccStates;
+
+            public override IEnumerable<DfaState<TResult>> SuccessorStates => this;
 
             IEnumerator IEnumerable.GetEnumerator()
             {
@@ -292,11 +286,6 @@ namespace CodeHive.DfaLex
                 {
                     consumer(lastc, char.MaxValue, state);
                 }
-            }
-
-            public override bool HasSuccessorStates()
-            {
-                return targetStates != NoSuccStates;
             }
 
             private int EnumInternal(DfaTransitionConsumer<TResult> consumer, int target, int previnternal)

@@ -49,7 +49,7 @@ namespace CodeHive.DfaLex.Tests
                     var state = states[i];
                     state.EnumerateTransitions((f, l, target) =>
                     {
-                        var targetSet = slowDestinies[target.GetStateNumber()];
+                        var targetSet = slowDestinies[target.StateNumber];
                         var a = true;
                         foreach (var token in targetSet)
                         {
