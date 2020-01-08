@@ -250,7 +250,9 @@ namespace CodeHive.DfaLex
                 }
             }
             catch (Exception)
-            { }
+            {
+                // Will be thrown as a new exception below
+            }
 
             throw new Exception($"Invalid character escape \\{src.Substring(spos, 1)}");
         }
