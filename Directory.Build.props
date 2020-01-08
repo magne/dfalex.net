@@ -18,11 +18,4 @@
     <VersionPrefix Condition=" '$(VersionPrefix)' == '' ">0.1.0</VersionPrefix>
   </PropertyGroup>
 
-  <Target Name="Output version" AfterTargets="AfterBuild">
-    <Message Importance="High" Text="Version              = $(Version)"/>
-    <Message Importance="High" Text="AssemblyVersion      = $(AssemblyVersion)"/>
-    <Message Importance="High" Text="FileVersion          = $(FileVersion)"/>
-    <Message Importance="High" Text="InformationalVersion = $(InformationalVersion)"/>
-  </Target>
-
 </Project>
