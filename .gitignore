@@ -2,6 +2,7 @@
 .vscode/
 [Bb]in/
 [Oo]bj/
+TestResults/
 BenchmarkDotNet.Artifacts/
 
 *.DotSettings.user
