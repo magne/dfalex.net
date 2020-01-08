@@ -44,14 +44,14 @@ jobs:
         run: dotnet sonarscanner begin /k:"magne_dfalex.net" /o:"magne"
               /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
               /d:sonar.host.url="https://sonarcloud.io"
-              /d:sonar.cs.opencover.reportsPaths=**/coverage.opencover.xml
-              /d:sonar.cs.vstest.reportsPaths=**/*.trx
+              /d:sonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.opencover.xml
+              /d:sonar.cs.vstest.reportsPaths=**/TestResults/*.trx
 
       - name: Build
         run: dotnet build --configuration Release dfalex.sln
 
       - name: Test
-        run: dotnet test --configuration Release --no-build --logger trx /p:CollectCoverage=true /p:CoverletOutputFormat=opencover dfalex.sln
+        run: dotnet test --configuration Release --no-build --logger trx --collect:"XPlat Code Coverage" --settings coverletArgs.runsettings dfalex.sln
 
       - name: End SonarCloud Scan
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
