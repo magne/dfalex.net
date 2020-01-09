@@ -1,4 +1,4 @@
-name: Nuget Package Deploy
+name: Master CI
 
 on:
   push:
@@ -63,6 +63,7 @@ jobs:
     name: Deploy Nuget Package
     needs: build
     runs-on: ubuntu-18.04
+    if: contains(github.ref, 'development') || contains(github.ref, 'blabla')
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
     steps:
