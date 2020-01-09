@@ -353,7 +353,9 @@ namespace CodeHive.DfaLex
             object IEnumerator.Current => Current;
 
             public void Dispose()
-            { }
+            {
+                // empty implementation
+            }
 
             public DfaState<TResult> Current => array[pos++];
         }

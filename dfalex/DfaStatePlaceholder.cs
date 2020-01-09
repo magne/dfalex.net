@@ -59,9 +59,9 @@ namespace CodeHive.DfaLex
             return Delegate.ResolvePlaceholder();
         }
 
-        public sealed override DfaState<TResult> GetNextState(char c)
+        public sealed override DfaState<TResult> GetNextState(char ch)
         {
-            return Delegate.GetNextState(c);
+            return Delegate.GetNextState(ch);
         }
 
         public sealed override bool IsAccepting => Delegate.IsAccepting;

@@ -214,7 +214,9 @@ namespace CodeHive.DfaLex
             }
 
             public void Dispose()
-            { }
+            {
+                // empty implementation
+            }
 
             public void Reset()
             {
@@ -378,10 +380,14 @@ namespace CodeHive.DfaLex
         private class NoMatchEnumerator : IStringMatchEnumerator<TResult>
         {
             public void Dispose()
-            { }
+            {
+                // empty implementation
+            }
 
             public void Reset()
-            { }
+            {
+                // empty implementation
+            }
 
             object IEnumerator.Current => Current;
 
