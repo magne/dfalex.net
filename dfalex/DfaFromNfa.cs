@@ -36,9 +36,9 @@ namespace CodeHive.DfaLex
         private readonly DfaStateSignatureCodec dfaSigCodec = new DfaStateSignatureCodec();
 
         //These fields are scratch space
-        private readonly IntListKey       tempStateSignature = new IntListKey();
-        private readonly Queue<int>       tempNfaClosureList = new Queue<int>();
-        private readonly HashSet<TResult> tempResultSet      = new HashSet<TResult>();
+        private readonly IntListKey.Builder tempStateSignature = new IntListKey.Builder();
+        private readonly Queue<int>         tempNfaClosureList = new Queue<int>();
+        private readonly HashSet<TResult>   tempResultSet      = new HashSet<TResult>();
 
         //accumulators
         private readonly Dictionary<TResult, int> acceptSetMap = new Dictionary<TResult, int>();
@@ -222,12 +222,12 @@ namespace CodeHive.DfaLex
             dfaSigCodec.Finish();
 
             //make sure it's in the map
-            if (!dfaStateSignatureMap.TryGetValue(tempStateSignature, out var dfaStateNum))
+            var stateSig = tempStateSignature.Build();
+            if (!dfaStateSignatureMap.TryGetValue(stateSig, out var dfaStateNum))
             {
                 dfaStateNum = dfaStateSignatures.Count;
-                var newSig = new IntListKey(tempStateSignature);
-                dfaStateSignatures.Add(newSig);
-                dfaStateSignatureMap.Add(newSig, dfaStateNum);
+                dfaStateSignatures.Add(stateSig);
+                dfaStateSignatureMap.Add(stateSig, dfaStateNum);
             }
 
             return dfaStateNum;

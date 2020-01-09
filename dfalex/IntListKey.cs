@@ -24,65 +24,41 @@ namespace CodeHive.DfaLex
     /// </summary>
     internal class IntListKey
     {
-        private static readonly int[] NoInts = new int[0];
+        private readonly int[] buf;
+        private readonly int   hash;
 
-        private int[] buf = NoInts;
-        private int   size;
-        private int   hash;
-        private bool  hashValid;
-
-        public IntListKey()
-        { }
-
-        public IntListKey(IntListKey src)
+        private IntListKey(int[] src)
         {
-            if (src != null && src.size > 0)
+            buf = src;
+
+            var h = 0;
+            foreach (var v in buf)
             {
-                buf = new int[src.size];
-                Array.Copy(src.buf, buf, src.size);
-                size = src.size;
-                if (src.hashValid)
-                {
-                    hash = src.hash;
-                    hashValid = true;
-                }
-            }
-        }
-
-        public void Clear()
-        {
-            size = 0;
-            hashValid = false;
-        }
-
-        public void Add(int v)
-        {
-            if (size >= buf.Length)
-            {
-                var tmp = new int[size + (size >> 1) + 16];
-                Array.Copy(buf, tmp, buf.Length);
-                buf = tmp;
+                h *= 65539;
+                h += v;
             }
 
-            buf[size++] = v;
-            hashValid = false;
+            h ^= (int) ((uint) h >> 17);
+            h ^= (int) ((uint) h >> 11);
+            h ^= (int) ((uint) h >> 5);
+            hash = h;
         }
 
         public void ForData(Action<int[], int> target)
         {
-            target(buf, size);
+            target(buf, buf.Length);
         }
 
         public override bool Equals(object obj)
         {
             if (obj is IntListKey r)
             {
-                if (size != r.size || GetHashCode() != r.GetHashCode())
+                if (buf.Length != r.buf.Length || GetHashCode() != r.GetHashCode())
                 {
                     return false;
                 }
 
-                for (int i = size - 1; i >= 0; --i)
+                for (var i = buf.Length - 1; i >= 0; --i)
                 {
                     if (buf[i] != r.buf[i])
                     {
@@ -98,23 +74,49 @@ namespace CodeHive.DfaLex
 
         public override int GetHashCode()
         {
-            if (!hashValid)
-            {
-                int h = 0;
-                for (int i = 0; i < size; ++i)
-                {
-                    h *= 65539;
-                    h += buf[i];
-                }
+            return hash;
+        }
 
-                h ^= (int) ((uint) h >> 17);
-                h ^= (int) ((uint) h >> 11);
-                h ^= (int) ((uint) h >> 5);
-                hash = h;
-                hashValid = true;
+        public class Builder
+        {
+            private static readonly int[] Empty = new int[0];
+
+            private int[] buf;
+            private int   size;
+
+            public Builder(int capacity = 16)
+            {
+                buf = new int[capacity];
             }
 
-            return hash;
+            public void Clear()
+            {
+                size = 0;
+            }
+
+            public void Add(int v)
+            {
+                if (size >= buf.Length)
+                {
+                    var tmp = new int[size + (size >> 1) + 16];
+                    Array.Copy(buf, tmp, buf.Length);
+                    buf = tmp;
+                }
+
+                buf[size++] = v;
+            }
+
+            public IntListKey Build()
+            {
+                var src = Empty;
+                if (size > 0)
+                {
+                    src = new int[size];
+                    Array.Copy(buf, src, size);
+                }
+
+                return new IntListKey(src);
+            }
         }
     }
 }
