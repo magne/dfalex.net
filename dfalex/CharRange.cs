@@ -524,7 +524,7 @@ namespace CodeHive.DfaLex
                         {
                             if (olddepth <= 0)
                             {
-                                inouts[d++] = inout & -1;
+                                inouts[d++] = inout & ~1;
                             }
                         }
                         else if (olddepth > 0)
