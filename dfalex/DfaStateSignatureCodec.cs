@@ -129,19 +129,19 @@ namespace CodeHive.DfaLex
             var bits = sigbuf[0];
             var nextpos = 1;
             var fieldLen = (bits & 31) + 1;
-            int fieldMask;
+            int localFieldMask;
             if (fieldLen >= 31)
             {
-                fieldMask = int.MaxValue;
+                localFieldMask = int.MaxValue;
             }
             else
             {
-                fieldMask = (1 << fieldLen) - 1;
+                localFieldMask = (1 << fieldLen) - 1;
             }
 
             bits = (int) ((uint) bits >> 5);
             var bitsleft = 32 - 5;
-            var minval = 0;
+            var minVal = 0;
             for (;;)
             {
                 var val = bits;
@@ -163,11 +163,11 @@ namespace CodeHive.DfaLex
                     bitsleft -= fieldLen;
                 }
 
-                val &= fieldMask;
-                minval += val;
-                if (val != fieldMask || fieldLen >= 31)
+                val &= localFieldMask;
+                minVal += val;
+                if (val != localFieldMask || fieldLen >= 31)
                 {
-                    target(minval++);
+                    target(minVal++);
                 }
             }
         }

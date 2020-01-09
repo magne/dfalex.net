@@ -499,8 +499,6 @@ namespace CodeHive.DfaLex
                     {
                         return false;
                     }
-
-                    nextc = trans1.FirstChar;
                 }
 
                 if (origOrderPartNums[trans1.State] != origOrderPartNums[trans2.State])

@@ -17,7 +17,7 @@
 
 namespace CodeHive.DfaLex
 {
-    internal class PrimeSizeFinder
+    internal static class PrimeSizeFinder
     {
         private static readonly int[] PrimeSizes =
         {

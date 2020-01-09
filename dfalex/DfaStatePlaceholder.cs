@@ -37,7 +37,7 @@ namespace CodeHive.DfaLex
         ///
         /// The initially constructed stat will accept no strings.
         /// </summary>
-        public DfaStatePlaceholder()
+        protected DfaStatePlaceholder()
         { }
 
         /// <summary>

@@ -26,7 +26,7 @@ namespace CodeHive.DfaLex
     ///
     /// <see cref="StringSearcher{TResult}.SearchString"/> produces these.
     /// </summary>
-    public interface IStringMatchEnumerator<TResult> : IEnumerator<TResult>
+    public interface IStringMatchEnumerator<out TResult> : IEnumerator<TResult>
     {
         /// <summary>
         /// Get the position of the start of the last match in the string.

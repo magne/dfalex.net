@@ -57,7 +57,7 @@ namespace CodeHive.DfaLex.Bench
             var m = new StringMatcher<bool>(src);
             if (m.FindNext(startState, out _))
             {
-                throw new Exception("not supposed to find a match");
+                throw new DfaException("not supposed to find a match");
             }
         }
     }
