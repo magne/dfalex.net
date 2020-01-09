@@ -32,8 +32,29 @@ jobs:
       - name: Disable .Net Welcome
         run: touch "$HOME/.dotnet/$(dotnet --version).dotnetFirstUseSentinel"
 
+      - name: Install SonarCloud scanner
+        run: |
+          dotnet tool install --global dotnet-sonarscanner --version 4.8.0
+          echo "::set-env name=PATH::${PATH}:${HOME}/.dotnet/tools"
+
+      - name: Start SonarCloud Scan
+        run: dotnet sonarscanner begin /k:"magne_dfalex.net" /o:"magne"
+              /v:$GitVersion_Major.$GitVersion_Minor
+              /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+              /d:sonar.host.url="https://sonarcloud.io"
+              /d:sonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.opencover.xml
+              /d:sonar.cs.vstest.reportsPaths=**/TestResults/*.trx
+              /d:sonar.pullrequest.key=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+              /d:sonar.pullrequest.branch=${{ github.head_ref }}
+              /d:sonar.pullrequest.base=${{ github.base_ref }}
+
       - name: Build
         run: dotnet build --configuration Release dfalex.sln
 
       - name: Test
-        run: dotnet test --configuration Release --no-build dfalex.sln
+        run: dotnet test --configuration Release --no-build --logger trx --collect:"XPlat Code Coverage" --settings coverletArgs.runsettings dfalex.sln
+
+      - name: End SonarCloud Scan
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

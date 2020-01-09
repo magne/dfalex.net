@@ -42,6 +42,7 @@ jobs:
 
       - name: Start SonarCloud Scan
         run: dotnet sonarscanner begin /k:"magne_dfalex.net" /o:"magne"
+              /v:$GitVersion_Major.$GitVersion_Minor
               /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
               /d:sonar.host.url="https://sonarcloud.io"
               /d:sonar.cs.opencover.reportsPaths=**/TestResults/**/coverage.opencover.xml
