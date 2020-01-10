@@ -29,8 +29,7 @@ namespace CodeHive.DfaLex
     [Serializable]
     internal class PackedTreeDfaPlaceholder<TResult> : DfaStatePlaceholder<TResult>
     {
-        private static readonly char[]                  NoChars      = new char[0];
-        private static readonly DfaStateImpl<TResult>[] NoSuccStates = new DfaStateImpl<TResult>[1];
+        private static readonly DfaStateImpl<TResult>[] NoSuccessorStates = new DfaStateImpl<TResult>[1];
 
         // Array-packed binary search tree
         // The BST contains an internal node for char c if the the transition on c is
@@ -54,7 +53,7 @@ namespace CodeHive.DfaLex
             var rawTransCount = info.GetTransitionCount();
             if (rawTransCount <= 0)
             {
-                internalNodes = NoChars;
+                internalNodes = Constants.NoChars;
                 targetStateNumbers = new[] {-1};
                 return;
             }
@@ -95,7 +94,7 @@ namespace CodeHive.DfaLex
             if (len < 1)
             {
                 //all characters same transition
-                internalNodes = NoChars;
+                internalNodes = Constants.NoChars;
                 targetStateNumbers = new[] {trans.State};
                 return;
             }
@@ -118,7 +117,7 @@ namespace CodeHive.DfaLex
             Delegate = new StateImpl(internalNodes, targetStates, accepting, match, stateNum);
         }
 
-        //generate the tree by inorder traversal
+        //generate the tree by in-order traversal
         private void _transcribeSubtree(int root, TranscriptionSource ts)
         {
             if (root < internalNodes.Length)
@@ -143,7 +142,7 @@ namespace CodeHive.DfaLex
             //cursor position is just before m_srcChars[m_srcPos]
             private int srcPos;
 
-            //transitions an indexes less than this are no longer relvant
+            //transitions an indexes less than this are no longer relevant
             private int currentTrans;
 
             internal TranscriptionSource(char[] srcChars, DfaStateInfo stateInfo)
@@ -189,12 +188,12 @@ namespace CodeHive.DfaLex
 
             internal StateImpl(char[] internalNodes, DfaStateImpl<TResult>[] targetStates, bool accepting, TResult match, int stateNum)
             {
-                var haveSucc = targetStates.Any(st => st != null);
+                var haveSuccessors = targetStates.Any(st => st != null);
 
-                if (!haveSucc)
+                if (!haveSuccessors)
                 {
-                    internalNodes = NoChars;
-                    targetStates = NoSuccStates;
+                    internalNodes = Constants.NoChars;
+                    targetStates = NoSuccessorStates;
                 }
 
                 this.internalNodes = internalNodes;
@@ -248,7 +247,7 @@ namespace CodeHive.DfaLex
 
             public override int StateNumber { get; }
 
-            public override bool HasSuccessorStates =>  targetStates != NoSuccStates;
+            public override bool HasSuccessorStates =>  targetStates != NoSuccessorStates;
 
             public override IEnumerable<DfaState<TResult>> SuccessorStates => this;
 
@@ -274,63 +273,63 @@ namespace CodeHive.DfaLex
                     return;
                 }
 
-                var lastinternal = EnumInternal(consumer, 0, -1);
-                var lastc = internalNodes[lastinternal];
-                if (lastc >= char.MaxValue)
+                var lastInternal = EnumInternal(consumer, 0, -1);
+                var lastC = internalNodes[lastInternal];
+                if (lastC >= char.MaxValue)
                 {
                     return;
                 }
 
-                DfaState<TResult> state = targetStates[lastinternal * 2 + 2 - internalNodes.Length];
+                DfaState<TResult> state = targetStates[lastInternal * 2 + 2 - internalNodes.Length];
                 if (state != null)
                 {
-                    consumer(lastc, char.MaxValue, state);
+                    consumer(lastC, char.MaxValue, state);
                 }
             }
 
-            private int EnumInternal(DfaTransitionConsumer<TResult> consumer, int target, int previnternal)
+            private int EnumInternal(DfaTransitionConsumer<TResult> consumer, int target, int prevInternal)
             {
                 var child = target * 2 + 1; //left child of target
                 if (child < internalNodes.Length)
                 {
-                    previnternal = EnumInternal(consumer, child, previnternal);
+                    prevInternal = EnumInternal(consumer, child, prevInternal);
                 }
 
                 DfaState<TResult> state;
-                var cfrom = (previnternal < 0 ? 0 : internalNodes[previnternal]);
-                var cto = internalNodes[target] - 1;
+                var cFrom = (prevInternal < 0 ? 0 : internalNodes[prevInternal]);
+                var cTo = internalNodes[target] - 1;
                 //between adjacent internal nodes is a leaf
-                if (previnternal > target)
+                if (prevInternal > target)
                 {
-                    state = targetStates[previnternal * 2 + 2 - internalNodes.Length];
+                    state = targetStates[prevInternal * 2 + 2 - internalNodes.Length];
                 }
                 else
                 {
                     state = targetStates[target * 2 + 1 - internalNodes.Length];
                 }
 
-                if (state != null && cfrom <= cto)
+                if (state != null && cFrom <= cTo)
                 {
-                    consumer((char) cfrom, (char) cto, state);
+                    consumer((char) cFrom, (char) cTo, state);
                 }
 
-                previnternal = target;
+                prevInternal = target;
                 ++child; // right child of target
                 if (child < internalNodes.Length)
                 {
-                    previnternal = EnumInternal(consumer, child, previnternal);
+                    prevInternal = EnumInternal(consumer, child, prevInternal);
                 }
 
-                return previnternal;
+                return prevInternal;
             }
         }
 
         private sealed class TransitionArrayIterator : IEnumerator<DfaState<TResult>>
         {
-            private readonly DfaState<TResult>[] array;
+            private readonly DfaStateImpl<TResult>[] array;
             private          int                 pos;
 
-            internal TransitionArrayIterator(DfaState<TResult>[] array)
+            internal TransitionArrayIterator(DfaStateImpl<TResult>[] array)
             {
                 this.array = array;
                 for (pos = 0; pos < this.array.Length && this.array[pos] == null; ++pos)

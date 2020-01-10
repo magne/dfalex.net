@@ -36,7 +36,6 @@ namespace CodeHive.DfaLex
     /// <typeparam name="TResult"></typeparam>
     public class DfaAuxiliaryInformation<TResult>
     {
-        private static readonly object                  Sentinel = new object();
         private readonly        List<DfaState<TResult>> startStates;
         private                 List<DfaState<TResult>> statesByNumber;
         private                 int[]                   cycleNumbers;
@@ -336,7 +335,7 @@ namespace CodeHive.DfaLex
             {
                 var cycleNum = cycleNumbers[i];
                 var o = (cycleNum >= 0 ? cycleDestinies[cycleNum] : destinies[i]);
-                destinies[i] = (o == Sentinel ? default : (TResult) o);
+                destinies[i] = (o == Constants.Sentinel ? default : (TResult) o);
             }
 
             destiniesByNumber = new List<TResult>(destinies.Cast<TResult>());
@@ -356,12 +355,12 @@ namespace CodeHive.DfaLex
                 return b;
             }
 
-            if (a == Sentinel || b == Sentinel)
+            if (a == Constants.Sentinel || b == Constants.Sentinel)
             {
-                return Sentinel;
+                return Constants.Sentinel;
             }
 
-            return a.Equals(b) ? a : Sentinel;
+            return a.Equals(b) ? a : Constants.Sentinel;
         }
     }
 }
