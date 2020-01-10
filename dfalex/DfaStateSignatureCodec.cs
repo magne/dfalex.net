@@ -142,7 +142,7 @@ namespace CodeHive.DfaLex
             bits = (int) ((uint) bits >> 5);
             var bitsleft = 32 - 5;
             var minVal = 0;
-            for (;;)
+            while (true)
             {
                 var val = bits;
                 if (bitsleft < fieldLen)

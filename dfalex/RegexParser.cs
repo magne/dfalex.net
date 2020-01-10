@@ -101,7 +101,7 @@ namespace CodeHive.DfaLex
             stateStack.Push(DFA);
             var srclen = src.Length;
             var maxpos = 0;
-            for (;;)
+            while (true)
             {
                 // Match up to the end of the recognized symbol stack.  If we can't do
                 // this, then there's a bug and we've reduced something we shouldn't have

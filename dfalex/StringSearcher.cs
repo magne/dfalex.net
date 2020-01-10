@@ -62,7 +62,7 @@ namespace CodeHive.DfaLex
 
             //see if the string has at least one match.  If there are
             //no matches, then we don't have to allocate anything
-            for (;;)
+            while (true)
             {
                 if (pos <= 0)
                 {

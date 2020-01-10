@@ -176,21 +176,19 @@ namespace CodeHive.DfaLex
             var reachable = new List<int>();
 
             //first find all epsilon-reachable states
+            var checkSet = new HashSet<int>();
+            reachable.Add(state);
+            checkSet.Add(reachable[0]); //same Integer instance
+            for (var i = 0; i < reachable.Count; ++i)
             {
-                var checkSet = new HashSet<int>();
-                reachable.Add(state);
-                checkSet.Add(reachable[0]); //same Integer instance
-                for (var i = 0; i < reachable.Count; ++i)
-                {
-                    ForStateEpsilons(reachable[i],
-                        num =>
-                        {
-                            if (checkSet.Add(num))
-                            {
-                                reachable.Add(num);
-                            }
-                        });
-                }
+                ForStateEpsilons(reachable[i],
+                                 num =>
+                                 {
+                                     if (checkSet.Add(num))
+                                     {
+                                         reachable.Add(num);
+                                     }
+                                 });
             }
 
             //if none of them accept, then we're done
