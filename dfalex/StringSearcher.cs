@@ -377,7 +377,7 @@ namespace CodeHive.DfaLex
             }
         }
 
-        private class NoMatchEnumerator : IStringMatchEnumerator<TResult>
+        private sealed class NoMatchEnumerator : IStringMatchEnumerator<TResult>
         {
             public void Dispose()
             {
