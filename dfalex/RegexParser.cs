@@ -52,6 +52,7 @@ namespace CodeHive.DfaLex
     /// </summary>
     internal class RegexParser
     {
+        // ReSharper disable once InconsistentNaming
         private static readonly DfaState<Action> DFA = BuildParserDfa();
 
         private static readonly CharRange DigitChars    = CharRange.Digits;
@@ -298,42 +299,42 @@ namespace CodeHive.DfaLex
         {
             var bld = new DfaBuilder<Action>();
             // S can be the whole expression, or group contents
-            var Spos = Pattern.MaybeRepeat(Pattern.MaybeRepeat(CharRange.AnyOf("SCA|")).Then("("));
+            var sPos = Pattern.MaybeRepeat(Pattern.MaybeRepeat(CharRange.AnyOf("SCA|")).Then("("));
 
             // S: C | S '|' C
-            bld.AddPattern(Spos.Then("C"), parser => parser.Push("S", parser.Pop(1)));
-            bld.AddPattern(Spos.Then("S:|"), parser => parser.Push("|", null));
-            bld.AddPattern(Spos.Then("S|C"),
+            bld.AddPattern(sPos.Then("C"), parser => parser.Push("S", parser.Pop(1)));
+            bld.AddPattern(sPos.Then("S:|"), parser => parser.Push("|", null));
+            bld.AddPattern(sPos.Then("S|C"),
                 parser =>
                 {
                     var p1 = parser.Pop(2);
                     var p2 = parser.Pop(1);
                     parser.Push("S", Pattern.AnyOf(p1, p2));
                 });
-            var Cpos = Spos.ThenMaybe("S|");
+            var cPos = sPos.ThenMaybe("S|");
 
             // C: e | C A
-            bld.AddPattern(Cpos, parser => parser.Push("C", Pattern.Empty));
-            bld.AddPattern(Cpos.Then("CA"),
+            bld.AddPattern(cPos, parser => parser.Push("C", Pattern.Empty));
+            bld.AddPattern(cPos.Then("CA"),
                 parser =>
                 {
                     var p2 = parser.Pop(1);
                     var p1 = parser.Pop(1);
                     parser.Push("C", Pattern.Match(p1).Then(p2));
                 });
-            var Apos = Cpos.Then("C");
+            var aPos = cPos.Then("C");
 
             //A: A? | A+ | A*
-            bld.AddPattern(Apos.Then("A:?"), parser => parser.Push("A", Pattern.Maybe(parser.Pop(1))));
-            bld.AddPattern(Apos.Then("A:+"), parser => parser.Push("A", Pattern.Repeat(parser.Pop(1))));
-            bld.AddPattern(Apos.Then("A:*"), parser => parser.Push("A", Pattern.MaybeRepeat(parser.Pop(1))));
+            bld.AddPattern(aPos.Then("A:?"), parser => parser.Push("A", Pattern.Maybe(parser.Pop(1))));
+            bld.AddPattern(aPos.Then("A:+"), parser => parser.Push("A", Pattern.Repeat(parser.Pop(1))));
+            bld.AddPattern(aPos.Then("A:*"), parser => parser.Push("A", Pattern.MaybeRepeat(parser.Pop(1))));
 
             //A: GROUP
-            bld.AddPattern(Apos.Then(":("), parser => parser.Push("(", null));
-            bld.AddPattern(Apos.Then("(S:)"), parser => parser.Push("A", parser.Pop(2)));
+            bld.AddPattern(aPos.Then(":("), parser => parser.Push("(", null));
+            bld.AddPattern(aPos.Then("(S:)"), parser => parser.Push("A", parser.Pop(2)));
 
             //A: literal | .
-            bld.AddPattern(Apos.Then(":").Then(CharRange.CreateBuilder().AddChars(".()[]+*?|\\").Invert().Build()),
+            bld.AddPattern(aPos.Then(":").Then(CharRange.CreateBuilder().AddChars(".()[]+*?|\\").Invert().Build()),
                 parser =>
                 {
                     CharRange range;
@@ -358,7 +359,7 @@ namespace CodeHive.DfaLex
 
                     parser.Push("A", range);
                 });
-            bld.AddPattern(Apos.Then(":."), parser => parser.Push("A", CharRange.All));
+            bld.AddPattern(aPos.Then(":."), parser => parser.Push("A", CharRange.All));
 
             var charEscape = Pattern.Match(":\\").Then(Pattern.AnyOf(
                 Pattern.Match("x").Then(CharRange.HexDigits).Then(CharRange.HexDigits),
@@ -368,23 +369,23 @@ namespace CodeHive.DfaLex
                 CharRange.CreateBuilder().AddChars("xucdDwWsS").Invert().Build()));
             var classEscape = Pattern.Match(":\\").Then(Pattern.AnyCharIn("dDsSwW"));
 
-            bld.AddPattern(Apos.Then(charEscape), parser => parser.Push("A", CharRange.Single(parser.ParseCharEscape())));
-            bld.AddPattern(Apos.Then(classEscape), parser => parser.Push("A", parser.ParseClassEscape()));
+            bld.AddPattern(aPos.Then(charEscape), parser => parser.Push("A", CharRange.Single(parser.ParseCharEscape())));
+            bld.AddPattern(aPos.Then(classEscape), parser => parser.Push("A", parser.ParseClassEscape()));
 
             //A: [R] | [^R]
-            bld.AddPattern(Apos.Then(":[^"),
+            bld.AddPattern(aPos.Then(":[^"),
                 parser =>
                 {
                     parser.charBuilder.Clear();
                     parser.Push("[^", null);
                 });
-            bld.AddPattern(Apos.Then(":["),
+            bld.AddPattern(aPos.Then(":["),
                 parser =>
                 {
                     parser.charBuilder.Clear();
                     parser.Push("[", null);
                 });
-            bld.AddPattern(Apos.Then("[R:]"),
+            bld.AddPattern(aPos.Then("[R:]"),
                 parser =>
                 {
                     parser.Pop(2);
@@ -395,7 +396,7 @@ namespace CodeHive.DfaLex
 
                     parser.Push("A", parser.charBuilder.Build());
                 });
-            bld.AddPattern(Apos.Then("[^R:]"),
+            bld.AddPattern(aPos.Then("[^R:]"),
                 parser =>
                 {
                     parser.Pop(3);
@@ -406,24 +407,24 @@ namespace CodeHive.DfaLex
 
                     parser.Push("A", parser.charBuilder.Invert().Build());
                 });
-            var Rpos = Apos.Then(Pattern.AnyOf("[^", "["));
+            var rPos = aPos.Then(Pattern.AnyOf("[^", "["));
 
             //R: e | R classEscape | R c | R c - c
-            bld.AddPattern(Rpos, parser => parser.Push("R", null));
-            bld.AddPattern(Rpos.Then("R").Then(classEscape),
+            bld.AddPattern(rPos, parser => parser.Push("R", null));
+            bld.AddPattern(rPos.Then("R").Then(classEscape),
                 parser =>
                 {
                     parser.charBuilder.AddRange(parser.ParseClassEscape());
                     parser.Pop(0);
                 });
-            bld.AddPattern(Rpos.Then("Rc"),
+            bld.AddPattern(rPos.Then("Rc"),
                 parser =>
                 {
                     parser.Pop(1);
                     parser.charBuilder.AddRange(parser.clast, parser.clast);
                 });
-            bld.AddPattern(Rpos.Then("Rc:-"), parser => parser.Push("-", null));
-            bld.AddPattern(Rpos.Then("Rc-c"),
+            bld.AddPattern(rPos.Then("Rc:-"), parser => parser.Push("-", null));
+            bld.AddPattern(rPos.Then("Rc-c"),
                 parser =>
                 {
                     parser.Pop(3);
@@ -436,7 +437,7 @@ namespace CodeHive.DfaLex
                         parser.charBuilder.AddRange(parser.cprev, parser.clast);
                     }
                 });
-            var cpos = Rpos.Then("R").ThenMaybe("c-");
+            var cpos = rPos.Then("R").ThenMaybe("c-");
 
             //class chars
             bld.AddPattern(cpos.Then(":").Then(CharRange.CreateBuilder().AddChars("-[]\\").Invert().Build()),

@@ -123,7 +123,7 @@ namespace CodeHive.DfaLex
         /// Get the result attached to the given state
         /// </summary>
         /// <param name="state">the state number</param>
-        /// <returns>the result that was provided to <see cref="AddState"/> when the state was created</returns>
+        /// <returns>the result that was provided to <see cref="AddState()"/> when the state was created</returns>
         public TResult GetAccept(int state)
         {
             return stateAccepts[state];

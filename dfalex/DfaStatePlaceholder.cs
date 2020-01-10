@@ -37,6 +37,7 @@ namespace CodeHive.DfaLex
         ///
         /// The initially constructed stat will accept no strings.
         /// </summary>
+        // ReSharper disable once EmptyConstructor
         protected DfaStatePlaceholder()
         { }
 
@@ -45,9 +46,9 @@ namespace CodeHive.DfaLex
         ///
         /// This is called on all DFA state placeholders after they are constructed
         /// </summary>
-        /// <param name="statenum"></param>
+        /// <param name="stateNum"></param>
         /// <param name="allStates"></param>
-        internal abstract void CreateDelegate(int statenum, List<DfaStatePlaceholder<TResult>> allStates);
+        internal abstract void CreateDelegate(int stateNum, List<DfaStatePlaceholder<TResult>> allStates);
 
         internal sealed override void FixPlaceholderReferences()
         {
