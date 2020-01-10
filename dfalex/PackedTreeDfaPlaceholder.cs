@@ -106,7 +106,7 @@ namespace CodeHive.DfaLex
             _transcribeSubtree(0, new TranscriptionSource(tempChars, info));
         }
 
-        internal override void CreateDelegate(int statenum, List<DfaStatePlaceholder<TResult>> allStates)
+        internal override void CreateDelegate(int stateNum, List<DfaStatePlaceholder<TResult>> allStates)
         {
             var targetStates = new DfaStateImpl<TResult>[targetStateNumbers.Length];
             for (var i = 0; i < targetStates.Length; ++i)
@@ -115,7 +115,7 @@ namespace CodeHive.DfaLex
                 targetStates[i] = num < 0 ? null : allStates[num];
             }
 
-            Delegate = new StateImpl(internalNodes, targetStates, accepting, match, statenum);
+            Delegate = new StateImpl(internalNodes, targetStates, accepting, match, stateNum);
         }
 
         //generate the tree by inorder traversal

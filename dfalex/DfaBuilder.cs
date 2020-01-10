@@ -287,7 +287,7 @@ namespace CodeHive.DfaLex
                     ms.Flush();
                     cs.FlushFinalBlock();
 
-                    cacheKey = GetBase32Digest(hashAlg.Hash);
+                    cacheKey = Base32.GetDigest(hashAlg.Hash);
                 }
 
                 serializableDfa = (SerializableDfa<TResult>) cache.GetCachedItem(cacheKey);
@@ -379,32 +379,10 @@ namespace CodeHive.DfaLex
                 ms.Flush();
                 cs.FlushFinalBlock();
 
-                cacheKey = GetBase32Digest(hashAlg.Hash);
+                cacheKey = Base32.GetDigest(hashAlg.Hash);
             }
 
             return cacheKey;
-        }
-
-        private static readonly char[] Digits36 = "0123456789abcdefghijklmnopqrstuvwxyz".ToCharArray();
-
-        private static string GetBase32Digest(IEnumerable<byte> messageDigest)
-        {
-            var sb = new StringBuilder();
-            var bits = 0;
-            var nbits = 0;
-            foreach (var b in messageDigest)
-            {
-                bits |= (b & 255) << nbits;
-                nbits += 8;
-                while (nbits >= 5)
-                {
-                    sb.Append(Digits36[bits & 31]);
-                    bits = (int) ((uint) bits >> 5);
-                    nbits -= 5;
-                }
-            }
-
-            return sb.ToString();
         }
 
         private SerializableDfa<TResult> _build(IList<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
@@ -513,6 +491,31 @@ namespace CodeHive.DfaLex
         private static T DefaultAmbiguityResolver<T>(IEnumerable<T> matches)
         {
             throw new DfaAmbiguityException<T>(matches);
+        }
+    }
+
+    internal static class Base32
+    {
+        private static readonly char[] Digits36 = "0123456789abcdefghijklmnopqrstuvwxyz".ToCharArray();
+
+        internal static string GetDigest(IEnumerable<byte> messageDigest)
+        {
+            var sb = new StringBuilder();
+            var bits = 0;
+            var nbits = 0;
+            foreach (var b in messageDigest)
+            {
+                bits |= (b & 255) << nbits;
+                nbits += 8;
+                while (nbits >= 5)
+                {
+                    sb.Append(Digits36[bits & 31]);
+                    bits = (int) ((uint) bits >> 5);
+                    nbits -= 5;
+                }
+            }
+
+            return sb.ToString();
         }
     }
 }

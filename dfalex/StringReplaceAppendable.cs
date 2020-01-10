@@ -67,9 +67,14 @@ namespace CodeHive.DfaLex
 
         public IAppendable Append(string csq, int start, int end)
         {
-            if (start < 0 || end < start)
+            if (start < 0)
             {
-                throw new IndexOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(start));
+            }
+
+            if (end < start)
+            {
+                throw new ArgumentOutOfRangeException(nameof(end));
             }
 
             if (buf == null)
@@ -78,7 +83,7 @@ namespace CodeHive.DfaLex
                 {
                     if (end > src.Length)
                     {
-                        throw new IndexOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(end));
                     }
 
                     len = end;

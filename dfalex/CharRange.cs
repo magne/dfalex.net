@@ -512,22 +512,22 @@ namespace CodeHive.DfaLex
                     var depth = 0;
                     for (var s = 0; s < size;)
                     {
-                        var olddepth = depth;
+                        var oldDepth = depth;
                         var inout = inouts[s++];
-                        depth += (inout & 1) == 0 ? 1 : -1;
+                        depth += DepthChange(inout);
                         while (s < size && (inouts[s] >> 1) == inout >> 1)
                         {
-                            depth += (inouts[s++] & 1) == 0 ? 1 : -1;
+                            depth += DepthChange(inouts[s++]);
                         }
 
                         if (depth > 0)
                         {
-                            if (olddepth <= 0)
+                            if (oldDepth <= 0)
                             {
                                 inouts[d++] = inout & ~1;
                             }
                         }
-                        else if (olddepth > 0)
+                        else if (oldDepth > 0)
                         {
                             inouts[d++] = inout | 1;
                         }
@@ -537,6 +537,11 @@ namespace CodeHive.DfaLex
                 }
 
                 normalized = true;
+            }
+
+            private int DepthChange(int inout)
+            {
+                return (inout & 1) == 0 ? 1 : -1;
             }
 
             // Make sure we have room to add n ints to inouts

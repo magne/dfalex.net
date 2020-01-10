@@ -163,7 +163,7 @@ namespace CodeHive.DfaLex
                 {
                     if (doneTo <= s)
                     {
-                        throw new IndexOutOfRangeException("Replacer tried to rescan matched string");
+                        throw new DfaException("Replacer tried to rescan matched string");
                     }
 
                     it.Reposition(doneTo);
@@ -183,7 +183,7 @@ namespace CodeHive.DfaLex
             return src;
         }
 
-        private class EnumeratorImpl : IStringMatchEnumerator<TResult>
+        private sealed class EnumeratorImpl : IStringMatchEnumerator<TResult>
         {
             private readonly string            src;
             private readonly DfaState<TResult> matcher;

@@ -21,16 +21,16 @@ namespace CodeHive.DfaLex.Tests
             //tested up to 10000 once, but that takes a very long time (O(n^3))
             for (var n = 0; n < 500; n++)
             {
-                var pcycle = r.NextDouble();
-                pcycle *= pcycle * pcycle;
-                var plink = r.NextDouble();
-                var paccept = r.NextDouble();
-                RandomDfa(n, pcycle, plink, paccept);
+                var pCycle = r.NextDouble();
+                pCycle *= pCycle * pCycle;
+                var pLink = r.NextDouble();
+                var pAccept = r.NextDouble();
+                RandomDfa(n, pCycle, pLink, pAccept);
                 Check();
             }
         }
 
-        private void RandomDfa(int nstates, double Pcycle, double Plink, double Paccept)
+        private void RandomDfa(int nstates, double pCycle, double pLink, double pAccept)
         {
             cycleNumbers = new int[nstates];
             states.Clear();
@@ -39,7 +39,7 @@ namespace CodeHive.DfaLex.Tests
             {
                 var pos = states.Count;
                 var cycSz = 1;
-                if (r.NextDouble() < Pcycle)
+                if (r.NextDouble() < pCycle)
                 {
                     cycSz = Math.Min(r.Next(20) + 1, nstates - pos);
                 }
@@ -47,7 +47,7 @@ namespace CodeHive.DfaLex.Tests
                 for (var i = 0; i < cycSz; ++i)
                 {
                     int? accept = null;
-                    if (r.NextDouble() < Paccept)
+                    if (r.NextDouble() < pAccept)
                     {
                         accept = r.Next(8);
                     }
@@ -78,7 +78,7 @@ namespace CodeHive.DfaLex.Tests
             //link
             for (var pos = 1; pos < nstates; ++pos)
             {
-                var nLinks = (int) Math.Round(Plink * pos);
+                var nLinks = (int) Math.Round(pLink * pos);
                 for (var i = 0; i < nLinks; i++)
                 {
                     var target = r.Next(pos);
