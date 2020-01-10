@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace CodeHive.DfaLex
@@ -25,7 +26,8 @@ namespace CodeHive.DfaLex
     /// Exception thrown by default when patterns for multiple results match the same string in a DFA, and no way has
     /// been provided to combine result.
     /// </summary>
-    public class DfaAmbiguityException<TResult> : Exception
+    [Serializable]
+    public sealed class DfaAmbiguityException<TResult> : Exception
     {
         /// <summary>
         /// Create a new AmbiguityException.
@@ -49,6 +51,10 @@ namespace CodeHive.DfaLex
         {
             Results = inivals.Results;
         }
+
+        private DfaAmbiguityException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        { }
 
         /// <summary>
         /// Get the set of results that can match the same string.

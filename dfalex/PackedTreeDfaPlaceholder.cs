@@ -325,7 +325,7 @@ namespace CodeHive.DfaLex
             }
         }
 
-        private class TransitionArrayIterator : IEnumerator<DfaState<TResult>>
+        private sealed class TransitionArrayIterator : IEnumerator<DfaState<TResult>>
         {
             private readonly DfaState<TResult>[] array;
             private          int                 pos;
@@ -334,13 +334,17 @@ namespace CodeHive.DfaLex
             {
                 this.array = array;
                 for (pos = 0; pos < this.array.Length && this.array[pos] == null; ++pos)
-                { }
+                {
+                    // empty
+                }
             }
 
             public bool MoveNext()
             {
                 for (; pos < array.Length && array[pos] == null; ++pos)
-                { }
+                {
+                    // empty
+                }
 
                 return pos < array.Length;
             }
@@ -353,7 +357,9 @@ namespace CodeHive.DfaLex
             object IEnumerator.Current => Current;
 
             public void Dispose()
-            { }
+            {
+                // empty implementation
+            }
 
             public DfaState<TResult> Current => array[pos++];
         }

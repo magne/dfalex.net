@@ -295,11 +295,8 @@ namespace CodeHive.DfaLex
 
             if (serializableDfa == null)
             {
-                RawDfa<TResult> minimalDfa;
-                {
-                    var rawDfa = new DfaFromNfa<TResult>(nfa, nfaStartStates, ambiguityResolver).GetDfa();
-                    minimalDfa = new DfaMinimizer<TResult>(rawDfa).GetMinimizedDfa();
-                }
+                var rawDfa = new DfaFromNfa<TResult>(nfa, nfaStartStates, ambiguityResolver).GetDfa();
+                var minimalDfa = new DfaMinimizer<TResult>(rawDfa).GetMinimizedDfa();
                 serializableDfa = new SerializableDfa<TResult>(minimalDfa);
                 if (cacheKey != null)
                 {
@@ -462,15 +459,9 @@ namespace CodeHive.DfaLex
                 }
             }
 
-            SerializableDfa<TResult> serializableDfa;
-            {
-                RawDfa<TResult> minimalDfa;
-                {
-                    var rawDfa = new DfaFromNfa<TResult>(nfa, nfaStartStates, ambiguityResolver).GetDfa();
-                    minimalDfa = new DfaMinimizer<TResult>(rawDfa).GetMinimizedDfa();
-                }
-                serializableDfa = new SerializableDfa<TResult>(minimalDfa);
-            }
+            var rawDfa = new DfaFromNfa<TResult>(nfa, nfaStartStates, ambiguityResolver).GetDfa();
+            var minimalDfa = new DfaMinimizer<TResult>(rawDfa).GetMinimizedDfa();
+            var serializableDfa = new SerializableDfa<TResult>(minimalDfa);
             return serializableDfa;
         }
 
@@ -513,15 +504,9 @@ namespace CodeHive.DfaLex
             startState = Pattern.MaybeRepeat(CharRange.All).AddToNfa(nfa, startState);
 
             //build the DFA
-            SerializableDfa<bool> serializableDfa;
-            {
-                RawDfa<bool> minimalDfa;
-                {
-                    var rawDfa = new DfaFromNfa<bool>(nfa, new[] {startState}, ambiguityResolver).GetDfa();
-                    minimalDfa = new DfaMinimizer<bool>(rawDfa).GetMinimizedDfa();
-                }
-                serializableDfa = new SerializableDfa<bool>(minimalDfa);
-            }
+            var rawDfa = new DfaFromNfa<bool>(nfa, new[] { startState }, ambiguityResolver).GetDfa();
+            var minimalDfa = new DfaMinimizer<bool>(rawDfa).GetMinimizedDfa();
+            var serializableDfa = new SerializableDfa<bool>(minimalDfa);
             return serializableDfa;
         }
 

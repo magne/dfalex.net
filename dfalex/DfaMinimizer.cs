@@ -207,23 +207,21 @@ namespace CodeHive.DfaLex
             }
 
             //now renumber the partitions with contiguous ints instead of start positions
+            var state = partitionOrderStates[0];
+            var prevPartIn = origOrderPartNums[state];
+            origOrderPartNums[state] = 0;
+            var prevPartOut = 0;
+            for (var i = 1; i < partitionOrderStates.Length; ++i)
             {
-                var st = partitionOrderStates[0];
-                var prevPartIn = origOrderPartNums[st];
-                origOrderPartNums[st] = 0;
-                var prevPartOut = 0;
-                for (var i = 1; i < partitionOrderStates.Length; ++i)
+                state = partitionOrderStates[i];
+                var partIn = origOrderPartNums[state];
+                if (partIn != prevPartIn)
                 {
-                    st = partitionOrderStates[i];
-                    var partIn = origOrderPartNums[st];
-                    if (partIn != prevPartIn)
-                    {
-                        prevPartIn = partIn;
-                        ++prevPartOut;
-                    }
-
-                    origOrderPartNums[st] = prevPartOut;
+                    prevPartIn = partIn;
+                    ++prevPartOut;
                 }
+
+                origOrderPartNums[state] = prevPartOut;
             }
         }
 
@@ -463,7 +461,7 @@ namespace CodeHive.DfaLex
             var trans1 = info1.GetTransition(0);
             var trans2 = info2.GetTransition(0);
             var nextc = 0;
-            for (;;)
+            while (true)
             {
                 while (trans1.LastChar < nextc)
                 {
@@ -493,14 +491,9 @@ namespace CodeHive.DfaLex
                     return trans1 == trans2;
                 }
 
-                if (trans1.FirstChar > nextc || trans2.FirstChar > nextc)
+                if ((trans1.FirstChar > nextc || trans2.FirstChar > nextc) && trans1.FirstChar != trans2.FirstChar)
                 {
-                    if (trans1.FirstChar != trans2.FirstChar)
-                    {
-                        return false;
-                    }
-
-                    nextc = trans1.FirstChar;
+                    return false;
                 }
 
                 if (origOrderPartNums[trans1.State] != origOrderPartNums[trans2.State])

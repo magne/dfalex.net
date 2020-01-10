@@ -26,17 +26,23 @@ namespace CodeHive.DfaLex.Bench
 
             dotnetPat = new Regex(Pattern, RegexOptions.Compiled);
 
-            {
-                var builder = new SearchAndReplaceBuilder();
-                builder.AddReplacement(DfaLex.Pattern.Regex(Pattern), (dest, srcStr, s, e) => 0);
-                replacer = builder.BuildStringReplacer();
-            }
+            replacer = CreateStringReplacer();
 
-            {
-                var builder = new DfaBuilder<bool>();
-                builder.AddPattern(DfaLex.Pattern.Regex(Pattern), true);
-                startState = builder.Build(null);
-            }
+            startState = CreateMatcher();
+        }
+
+        private static Func<string, string> CreateStringReplacer()
+        {
+            var builder = new SearchAndReplaceBuilder();
+            builder.AddReplacement(DfaLex.Pattern.Regex(Pattern), (dest, srcStr, s, e) => 0);
+            return builder.BuildStringReplacer();
+        }
+
+        private static DfaState<bool> CreateMatcher()
+        {
+            var builder = new DfaBuilder<bool>();
+            builder.AddPattern(DfaLex.Pattern.Regex(Pattern), true);
+            return builder.Build(null);
         }
 
         [Benchmark]
@@ -57,7 +63,7 @@ namespace CodeHive.DfaLex.Bench
             var m = new StringMatcher<bool>(src);
             if (m.FindNext(startState, out _))
             {
-                throw new Exception("not supposed to find a match");
+                throw new DfaException("not supposed to find a match");
             }
         }
     }

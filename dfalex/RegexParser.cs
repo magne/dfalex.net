@@ -101,7 +101,7 @@ namespace CodeHive.DfaLex
             stateStack.Push(DFA);
             var srclen = src.Length;
             var maxpos = 0;
-            for (;;)
+            while (true)
             {
                 // Match up to the end of the recognized symbol stack.  If we can't do
                 // this, then there's a bug and we've reduced something we shouldn't have
@@ -111,7 +111,7 @@ namespace CodeHive.DfaLex
                     st = st.GetNextState(symStack[stateStack.Count - 1]);
                     if (st == null)
                     {
-                        throw new Exception($"Internal bug encountered parsing regular expression: {src}");
+                        throw new DfaException($"Internal bug encountered parsing regular expression: {src}");
                     }
 
                     stateStack.Push(st);
@@ -198,7 +198,9 @@ namespace CodeHive.DfaLex
         {
             var spos = readPos - 1;
             for (; spos > 0 && src[spos - 1] != '\\'; --spos)
-            { }
+            {
+                // empty
+            }
 
             try
             {
@@ -254,14 +256,16 @@ namespace CodeHive.DfaLex
                 // Will be thrown as a new exception below
             }
 
-            throw new Exception($"Invalid character escape \\{src.Substring(spos, 1)}");
+            throw new DfaException($"Invalid character escape \\{src.Substring(spos, 1)}");
         }
 
         private CharRange ParseClassEscape()
         {
             var spos = readPos - 1;
             for (; spos > 0 && src[spos - 1] != '\\'; --spos)
-            { }
+            {
+                // empty
+            }
 
             switch (src[spos])
             {
@@ -284,7 +288,7 @@ namespace CodeHive.DfaLex
                     return NonWordChars;
             }
 
-            throw new Exception($"Invalid class escape \\{src.Substring(spos, 1)}");
+            throw new DfaException($"Invalid class escape \\{src.Substring(spos, 1)}");
         }
 
         // Build a DFA that matches a parse stack from the bottom to produce the next LR(1) action to perform.

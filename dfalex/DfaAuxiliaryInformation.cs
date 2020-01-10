@@ -140,7 +140,7 @@ namespace CodeHive.DfaLex
                 iterators[st.StateNumber] = st.SuccessorStates.GetEnumerator();
                 stack.Push(st);
                 onEnter(null, st);
-                for (;;)
+                while (true)
                 {
                     //process the next child of the stack top
                     st = stack.Peek();
@@ -244,7 +244,7 @@ namespace CodeHive.DfaLex
                         cycleNum = pcycle[0]++;
                     }
 
-                    for (;;)
+                    while (true)
                     {
                         var st = stack.Pop();
                         var sti = st.StateNumber;

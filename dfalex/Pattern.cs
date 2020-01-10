@@ -740,7 +740,7 @@ namespace CodeHive.DfaLex
         private class UnionPattern : Pattern
         {
             [Flags]
-            private enum Flags
+            private enum Checks
             {
                 EmptyChecked    = 1,
                 EmptyMatch      = 2,
@@ -751,7 +751,7 @@ namespace CodeHive.DfaLex
             }
 
             private readonly IMatchable[] choices;
-            private volatile Flags        flags = 0;
+            private volatile Checks        flags = 0;
 
             public UnionPattern(IMatchable[] choices)
             {
@@ -770,13 +770,13 @@ namespace CodeHive.DfaLex
                 return startState;
             }
 
-            public override bool MatchesEmpty => Check(Flags.EmptyChecked, Flags.EmptyMatch, pattern => pattern.MatchesEmpty);
+            public override bool MatchesEmpty => Check(Checks.EmptyChecked, Checks.EmptyMatch, pattern => pattern.MatchesEmpty);
 
-            public override bool MatchesNonEmpty => Check(Flags.NonemptyChecked, Flags.NonemptyMatch, pattern => pattern.MatchesNonEmpty);
+            public override bool MatchesNonEmpty => Check(Checks.NonemptyChecked, Checks.NonemptyMatch, pattern => pattern.MatchesNonEmpty);
 
             public override bool MatchesSomething => MatchesEmpty || MatchesNonEmpty;
 
-            public override bool IsUnbounded => Check(Flags.UnboundChecked, Flags.UnboundMatch, pattern => pattern.IsUnbounded);
+            public override bool IsUnbounded => Check(Checks.UnboundChecked, Checks.UnboundMatch, pattern => pattern.IsUnbounded);
 
             protected override Pattern CalcReverse()
             {
@@ -797,7 +797,7 @@ namespace CodeHive.DfaLex
                 return ret;
             }
 
-            private bool Check(Flags checkedFlag, Flags matchFlag, Func<IMatchable, bool> matcher)
+            private bool Check(Checks checkedFlag, Checks matchFlag, Func<IMatchable, bool> matcher)
             {
                 var f = flags;
                 if ((f & checkedFlag) == 0)

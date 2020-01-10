@@ -264,14 +264,11 @@ namespace CodeHive.DfaLex
             }
 
             var acceptSetIndex = 0;
-            if (dfaAccept.accepting)
+            if (dfaAccept.accepting && !acceptSetMap.TryGetValue(dfaAccept.accept, out acceptSetIndex))
             {
-                if (!acceptSetMap.TryGetValue(dfaAccept.accept, out acceptSetIndex))
-                {
-                    acceptSets.Add(dfaAccept);
-                    acceptSetIndex = acceptSets.Count - 1;
-                    acceptSetMap[dfaAccept.accept] = acceptSetIndex;
-                }
+                acceptSets.Add(dfaAccept);
+                acceptSetIndex = acceptSets.Count - 1;
+                acceptSetMap[dfaAccept.accept] = acceptSetIndex;
             }
 
             return new DfaStateInfo(transitions, acceptSetIndex);
