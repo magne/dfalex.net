@@ -239,9 +239,10 @@ namespace CodeHive.DfaLex
         }
 
         /*
-         * This was used to calculate LENGTH_PROGRESSION
-         *
-        static void Main(string[] argv)
+         * This is used to calculate LengthProgression
+         */
+        // ReSharper disable once UnusedMember.Global
+        internal static void Main()
         {
             var divisor = 1;
             for (var len = 1; len <= 30; len++)
@@ -260,6 +261,5 @@ namespace CodeHive.DfaLex
             var pexceed = Math.Pow(1.0 - rate, Math.Pow(2.0, len) - 1);
             return len / (1.0 - pexceed);
         }
-        */
     }
 }

@@ -79,9 +79,19 @@ namespace CodeHive.DfaLex
         public void SetPositions(int lastMatchStart, int lastMatchEnd, int searchLimit)
         {
             searchLimit = Math.Min(searchLimit, src.Length);
-            if (lastMatchStart < 0 || lastMatchEnd < lastMatchStart || searchLimit < lastMatchEnd)
+            if (lastMatchStart < 0)
             {
-                throw new IndexOutOfRangeException("Invalid positions in StringMatcher.setPositions");
+                throw new ArgumentOutOfRangeException(nameof(lastMatchStart));
+            }
+
+            if (lastMatchEnd < lastMatchStart)
+            {
+                throw new ArgumentOutOfRangeException(nameof(lastMatchEnd));
+            }
+
+            if (searchLimit < lastMatchEnd)
+            {
+                throw new ArgumentOutOfRangeException(nameof(searchLimit));
             }
 
             LastMatchStart = lastMatchStart;
