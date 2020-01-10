@@ -491,12 +491,9 @@ namespace CodeHive.DfaLex
                     return trans1 == trans2;
                 }
 
-                if (trans1.FirstChar > nextc || trans2.FirstChar > nextc)
+                if ((trans1.FirstChar > nextc || trans2.FirstChar > nextc) && trans1.FirstChar != trans2.FirstChar)
                 {
-                    if (trans1.FirstChar != trans2.FirstChar)
-                    {
-                        return false;
-                    }
+                    return false;
                 }
 
                 if (origOrderPartNums[trans1.State] != origOrderPartNums[trans2.State])
