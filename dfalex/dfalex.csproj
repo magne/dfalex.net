@@ -24,6 +24,12 @@ DFALex is written in Java by Matt Timmermans (https://github.com/mtimmerm/dfalex
     <NuspecProperties>documentation=../README.md;readme=../README.md</NuspecProperties>
   </PropertyGroup>
 
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 
   <!-- - - - - - - -->
   <!-- Source Link -->

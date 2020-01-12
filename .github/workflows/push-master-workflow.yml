@@ -81,7 +81,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            Initial release.
+            Release notes.
           draft: true
           prerelease: ${{ env.GitVersion_PreReleaseTag != '' }}
 
