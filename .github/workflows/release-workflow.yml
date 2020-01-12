@@ -1,0 +1,38 @@
+name: Publish Nuget packages
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    name: Publish Nuget packages
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Print GitHub Context # Debug step
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
+      - name: Extract release version
+        run: echo "::set-env name=GitVersion_SemVer::${GITHUB_REF#refs/tags/v}"
+
+      - name: Download Nuget release package
+        uses: wyozi/download-gh-release-asset@master
+        with:
+          args: CodeHive.DfaLex.${{ env.GitVersion_SemVer }}.nupkg
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Download Nuget release symbol package
+        uses: wyozi/download-gh-release-asset@master
+        with:
+          args: CodeHive.DfaLex.${{ env.GitVersion_SemVer }}.snupkg
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Push packages to nuget.org
+        run: dotnet nuget push CodeHive.DfaLex-${{ env.GitVersion_SemVer }}.*nupkg
+              --api-key ${{ secrets.NUGET_DEPLOY_KEY }}
+              --source https://api.nuget.org/v3/index.json
+
