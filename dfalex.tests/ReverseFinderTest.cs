@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Xunit;
 
 namespace CodeHive.DfaLex.Tests
@@ -49,10 +48,7 @@ namespace CodeHive.DfaLex.Tests
 
         private static string _toString(DfaState<bool> dfa)
         {
-            var w = new StringWriter();
-            var printer = new PrettyPrinter<bool>();
-            printer.Print(w, dfa);
-            return w.ToString();
+            return PrettyPrinter.Print(dfa);
         }
     }
 }
