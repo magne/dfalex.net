@@ -11,7 +11,7 @@ namespace CodeHive.DfaLex.Tests
     {
         private readonly ITestOutputHelper helper;
 
-        public TestBase(ITestOutputHelper helper)
+        protected TestBase(ITestOutputHelper helper)
         {
             this.helper = helper;
         }
@@ -43,15 +43,9 @@ namespace CodeHive.DfaLex.Tests
             return checkSet.Count;
         }
 
-        internal void CheckDfa<T>(DfaState<T> start, string resource, bool doStdout)
+        internal void CheckNfa<T>(Nfa<T> nfa, int start, string resource, bool doStdout = false)
         {
-            string have;
-            {
-                var printer = new PrettyPrinter<T>();
-                var w = new StringWriter();
-                printer.Print(w, start);
-                have = w.ToString();
-            }
+            var have = PrettyPrinter.Print(nfa, start);
             if (doStdout)
             {
                 helper.WriteLine(have);
@@ -61,12 +55,26 @@ namespace CodeHive.DfaLex.Tests
             Assert.Equal(want, have);
         }
 
+        internal void CheckDfa<T>(DfaState<T> start, string resource, bool doStdout = false)
+        {
+            var have = PrettyPrinter.Print(start);
+            if (doStdout)
+            {
+                helper.WriteLine(have);
+            }
+
+            var want = ReadResource(resource);
+            Assert.Equal(want, have);
+        }
+
+        internal void PrintDot<T>(Nfa<T> nfa, int start)
+        {
+            helper.WriteLine(PrettyPrinter.PrintDot(nfa, start));
+        }
+
         internal void PrintDot<T>(DfaState<T> start)
         {
-            var printer = new PrettyPrinter<T>();
-            var w = new StringWriter();
-            printer.PrintDot(w, start);
-            helper.WriteLine(w.ToString());
+            helper.WriteLine(PrettyPrinter.PrintDot(start));
         }
 
         protected string ReadResource(string resource)
@@ -75,13 +83,14 @@ namespace CodeHive.DfaLex.Tests
             var assembly = type.GetTypeInfo().Assembly;
             var filename = type.Namespace + "." + resource;
 
-            using (var stream = assembly.GetManifestResourceStream(filename))
+            using var stream = assembly.GetManifestResourceStream(filename);
+            if (stream == null)
             {
-                using (var reader = new StreamReader(stream))
-                {
-                    return reader.ReadToEnd();
-                }
+                return null;
             }
+
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         }
     }
 }

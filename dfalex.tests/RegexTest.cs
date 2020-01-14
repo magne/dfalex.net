@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Xunit;
 using Xunit.Abstractions;
@@ -89,10 +88,7 @@ namespace CodeHive.DfaLex.Tests
             var builder = new DfaBuilder<bool>();
             builder.AddPattern(p, true);
             var dfa = builder.Build(null);
-            var w = new StringWriter();
-            var printer = new PrettyPrinter<bool>();
-            printer.Print(w, dfa);
-            return w.ToString();
+            return PrettyPrinter.Print(dfa);
         }
     }
 }
