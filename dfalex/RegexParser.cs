@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using static CodeHive.DfaLex.RegexParserConstants;
 
 namespace CodeHive.DfaLex
 {
@@ -50,31 +51,9 @@ namespace CodeHive.DfaLex
     /// </item>
     /// </list>
     /// </summary>
-    internal class RegexParser
+    internal class RegexParser : RegexParser<IMatchable>
     {
-        // ReSharper disable once InconsistentNaming
-        private static readonly DfaState<Action> DFA = BuildParserDfa();
-
-        private static readonly CharRange DigitChars    = CharRange.Digits;
-        private static readonly CharRange NonDigitChars = DigitChars.Complement();
-
-        private static readonly CharRange SpaceChars    = CharRange.CreateBuilder().AddChars(" \t\n\r\f\u000B").Build();
-        private static readonly CharRange NonSpaceChars = SpaceChars.Complement();
-
-        private static readonly CharRange WordChars =
-            CharRange.CreateBuilder().AddRange('a', 'z').AddRange('A', 'Z').AddRange('0', '9').AddChars("_").Build();
-
-        private static readonly CharRange NonWordChars = WordChars.Complement();
-
-        private readonly string                  src;
-        private readonly bool                    caseI;
-        private          int                     readPos;
-        private readonly CharRange.Builder       charBuilder = CharRange.CreateBuilder();
-        private          char                    cprev;
-        private          char                    clast;
-        private readonly StringBuilder           symStack   = new StringBuilder();
-        private readonly Stack<IMatchable>       valStack   = new Stack<IMatchable>();
-        private readonly Stack<DfaState<Action>> stateStack = new Stack<DfaState<Action>>();
+        private static readonly IRegexParserActions<IMatchable> Actions = new MatchableRegexParserActions();
 
         /// <summary>
         /// Parse a regular expression.
@@ -88,19 +67,87 @@ namespace CodeHive.DfaLex
         }
 
         private RegexParser(string str, bool caseI)
+            : base(Actions, str, caseI)
+        { }
+
+        private sealed class MatchableRegexParserActions : IRegexParserActions<IMatchable>
         {
-            src = str;
+            public IMatchable Empty() => Pattern.Empty;
+
+            public IMatchable Literal(CharRange range) => range;
+
+            public IMatchable Alternate(IMatchable p1, IMatchable p2) => Pattern.AnyOf(p1, p2);
+
+            public IMatchable Catenate(IMatchable p1, IMatchable p2) => Pattern.Match(p1).Then(p2);
+
+            public IMatchable Repeat(IMatchable p, int min = -1, int max = -1, bool greedy = true)
+            {
+                switch (min, max)
+                {
+                    case (0, 1):
+                        return Pattern.Maybe(p);
+                    case (0, -1):
+                        return Pattern.MaybeRepeat(p);
+                    case (1, -1):
+                        return Pattern.Repeat(p);
+                    default:
+                        var strMin = min == -1 ? string.Empty : min.ToString();
+                        var strMax = max == -1 ? string.Empty : max.ToString();
+                        throw new DfaException($"Unsupported repeat {{{strMin},{strMax}}}");
+                }
+            }
+
+            public IMatchable Group(IMatchable p, int no) => p;
+        }
+    }
+
+    internal static class RegexParserConstants
+    {
+        internal static readonly CharRange DigitChars    = CharRange.Digits;
+        internal static readonly CharRange NonDigitChars = DigitChars.Complement();
+
+        internal static readonly CharRange SpaceChars    = CharRange.CreateBuilder().AddChars(" \t\n\r\f\u000B").Build();
+        internal static readonly CharRange NonSpaceChars = SpaceChars.Complement();
+
+        internal static readonly CharRange WordChars =
+            CharRange.CreateBuilder().AddRange('a', 'z').AddRange('A', 'Z').AddRange('0', '9').AddChars("_").Build();
+
+        internal static readonly CharRange NonWordChars = WordChars.Complement();
+    }
+
+    internal class RegexParser<T> where T : class
+    {
+        // ReSharper disable once InconsistentNaming
+        private static readonly DfaState<Action> DFA = BuildParserDfa();
+
+        private readonly IRegexParserActions<T>  actions;
+        private readonly string                  str;
+        private readonly bool                    caseI;
+        private          int                     readPos;
+        private readonly CharRange.Builder       charBuilder = CharRange.CreateBuilder();
+        private          char                    cprev;
+        private          char                    clast;
+        private          int                     nparen;
+        private readonly StringBuilder           symStack   = new StringBuilder();
+        private readonly Stack<T>                valStack   = new Stack<T>();
+        private readonly Stack<DfaState<Action>> stateStack = new Stack<DfaState<Action>>();
+
+        protected RegexParser(IRegexParserActions<T> actions, string str, bool caseI)
+        {
+            this.actions = actions;
+            this.str = str;
             this.caseI = caseI;
         }
 
-        private IMatchable Parse()
+        protected T Parse()
         {
             stateStack.Clear();
             valStack.Clear();
             symStack.Clear();
+            nparen = 0;
             readPos = 0;
             stateStack.Push(DFA);
-            var srclen = src.Length;
+            var srclen = str.Length;
             var maxpos = 0;
             while (true)
             {
@@ -112,7 +159,7 @@ namespace CodeHive.DfaLex
                     st = st.GetNextState(symStack[stateStack.Count - 1]);
                     if (st == null)
                     {
-                        throw new DfaException($"Internal bug encountered parsing regular expression: {src}");
+                        throw new DfaException($"Internal bug encountered parsing regular expression: {str}");
                     }
 
                     stateStack.Push(st);
@@ -127,7 +174,7 @@ namespace CodeHive.DfaLex
                 {
                     for (var i = readPos; i < srclen; ++i)
                     {
-                        lexState = lexState.GetNextState(src[i]);
+                        lexState = lexState.GetNextState(str[i]);
                         if (lexState == null)
                         {
                             break;
@@ -148,19 +195,19 @@ namespace CodeHive.DfaLex
                     break;
                 }
 
-                action(this);
+                action(this, actions);
             }
 
             if (!"S".Equals(symStack.ToString()))
             {
-                throw new ArgumentException($"Invald regular expression: \"{src}\" has error at position {maxpos}");
+                throw new ArgumentException($"Invald regular expression: \"{str}\" has error at position {maxpos}");
             }
 
             System.Diagnostics.Debug.Assert(valStack.Count == 1);
             return valStack.Pop();
         }
 
-        private void Push(string codes, IMatchable pattern)
+        private void Push(string codes, T pattern)
         {
             symStack.Append(codes);
             while (valStack.Count < symStack.Length)
@@ -169,9 +216,9 @@ namespace CodeHive.DfaLex
             }
         }
 
-        private IMatchable Pop(int nonterms)
+        private T Pop(int nonterms)
         {
-            IMatchable ret = null;
+            T ret = null;
             symStack.Remove(symStack.Length - nonterms, nonterms);
             while (valStack.Count > symStack.Length)
             {
@@ -192,20 +239,20 @@ namespace CodeHive.DfaLex
 
         private char LastChar()
         {
-            return src[readPos - 1];
+            return str[readPos - 1];
         }
 
         private char ParseCharEscape()
         {
             var spos = readPos - 1;
-            for (; spos > 0 && src[spos - 1] != '\\'; --spos)
+            for (; spos > 0 && str[spos - 1] != '\\'; --spos)
             {
                 // empty
             }
 
             try
             {
-                var ch = src[spos];
+                var ch = str[spos];
                 switch (ch)
                 {
                     case 't':
@@ -228,7 +275,7 @@ namespace CodeHive.DfaLex
 
                     case 'x':
                     case 'u':
-                        return (char) uint.Parse(src.Substring(spos + 1, readPos - spos - 1), NumberStyles.HexNumber);
+                        return (char) uint.Parse(str.Substring(spos + 1, readPos - spos - 1), NumberStyles.HexNumber);
 
                     case 'c':
                         if (ch >= 'A' && ch <= 'Z')
@@ -257,18 +304,18 @@ namespace CodeHive.DfaLex
                 // Will be thrown as a new exception below
             }
 
-            throw new DfaException($"Invalid character escape \\{src.Substring(spos, 1)}");
+            throw new DfaException($"Invalid character escape \\{str.Substring(spos, 1)}");
         }
 
         private CharRange ParseClassEscape()
         {
             var spos = readPos - 1;
-            for (; spos > 0 && src[spos - 1] != '\\'; --spos)
+            for (; spos > 0 && str[spos - 1] != '\\'; --spos)
             {
                 // empty
             }
 
-            switch (src[spos])
+            switch (str[spos])
             {
                 case 'd':
                     return DigitChars;
@@ -289,7 +336,7 @@ namespace CodeHive.DfaLex
                     return NonWordChars;
             }
 
-            throw new DfaException($"Invalid class escape \\{src.Substring(spos, 1)}");
+            throw new DfaException($"Invalid class escape \\{str.Substring(spos, 1)}");
         }
 
         // Build a DFA that matches a parse stack from the bottom to produce the next LR(1) action to perform.
@@ -302,162 +349,162 @@ namespace CodeHive.DfaLex
             var sPos = Pattern.MaybeRepeat(Pattern.MaybeRepeat(CharRange.AnyOf("SCA|")).Then("("));
 
             // S: C | S '|' C
-            bld.AddPattern(sPos.Then("C"), parser => parser.Push("S", parser.Pop(1)));
-            bld.AddPattern(sPos.Then("S:|"), parser => parser.Push("|", null));
+            bld.AddPattern(sPos.Then("C"),   (parser, _) => parser.Push("S", parser.Pop(1)));
+            bld.AddPattern(sPos.Then("S:|"), (parser, _) => parser.Push("|", null));
             bld.AddPattern(sPos.Then("S|C"),
-                parser =>
-                {
-                    var p1 = parser.Pop(2);
-                    var p2 = parser.Pop(1);
-                    parser.Push("S", Pattern.AnyOf(p1, p2));
-                });
+                           (parser, actions) =>
+                           {
+                               var p1 = parser.Pop(2);
+                               var p2 = parser.Pop(1);
+                               parser.Push("S", actions.Alternate(p1, p2));
+                           });
             var cPos = sPos.ThenMaybe("S|");
 
             // C: e | C A
-            bld.AddPattern(cPos, parser => parser.Push("C", Pattern.Empty));
+            bld.AddPattern(cPos, (parser, actions) => parser.Push("C", actions.Empty()));
             bld.AddPattern(cPos.Then("CA"),
-                parser =>
-                {
-                    var p2 = parser.Pop(1);
-                    var p1 = parser.Pop(1);
-                    parser.Push("C", Pattern.Match(p1).Then(p2));
-                });
+                           (parser, actions) =>
+                           {
+                               var p2 = parser.Pop(1);
+                               var p1 = parser.Pop(1);
+                               parser.Push("C", actions.Catenate(p1, p2));
+                           });
             var aPos = cPos.Then("C");
 
             //A: A? | A+ | A*
-            bld.AddPattern(aPos.Then("A:?"), parser => parser.Push("A", Pattern.Maybe(parser.Pop(1))));
-            bld.AddPattern(aPos.Then("A:+"), parser => parser.Push("A", Pattern.Repeat(parser.Pop(1))));
-            bld.AddPattern(aPos.Then("A:*"), parser => parser.Push("A", Pattern.MaybeRepeat(parser.Pop(1))));
+            bld.AddPattern(aPos.Then("A:?"), (parser, actions) => parser.Push("A", actions.Repeat(parser.Pop(1), 0, 1)));
+            bld.AddPattern(aPos.Then("A:+"), (parser, actions) => parser.Push("A", actions.Repeat(parser.Pop(1), 1)));
+            bld.AddPattern(aPos.Then("A:*"), (parser, actions) => parser.Push("A", actions.Repeat(parser.Pop(1), 0)));
 
             //A: GROUP
-            bld.AddPattern(aPos.Then(":("), parser => parser.Push("(", null));
-            bld.AddPattern(aPos.Then("(S:)"), parser => parser.Push("A", parser.Pop(2)));
+            bld.AddPattern(aPos.Then(":("),   (parser, actions) => parser.Push("(", null));
+            bld.AddPattern(aPos.Then("(S:)"), (parser, actions) => parser.Push("A", actions.Group(parser.Pop(2), ++parser.nparen)));
 
             //A: literal | .
             bld.AddPattern(aPos.Then(":").Then(CharRange.CreateBuilder().AddChars(".()[]+*?|\\").Invert().Build()),
-                parser =>
-                {
-                    CharRange range;
-                    var c = parser.LastChar();
-                    if (!parser.caseI)
-                    {
-                        range = CharRange.Single(c);
-                    }
-                    else
-                    {
-                        var lc = char.ToLowerInvariant(c);
-                        var uc = char.ToUpperInvariant(c);
-                        if (lc == uc && lc == c)
-                        {
-                            range = CharRange.Single(c);
-                        }
-                        else
-                        {
-                            range = CharRange.CreateBuilder().AddChar(c).AddChar(lc).AddChar(uc).Build();
-                        }
-                    }
+                           (parser, actions) =>
+                           {
+                               CharRange range;
+                               var c = parser.LastChar();
+                               if (!parser.caseI)
+                               {
+                                   range = CharRange.Single(c);
+                               }
+                               else
+                               {
+                                   var lc = char.ToLowerInvariant(c);
+                                   var uc = char.ToUpperInvariant(c);
+                                   if (lc == uc && lc == c)
+                                   {
+                                       range = CharRange.Single(c);
+                                   }
+                                   else
+                                   {
+                                       range = CharRange.CreateBuilder().AddChar(c).AddChar(lc).AddChar(uc).Build();
+                                   }
+                               }
 
-                    parser.Push("A", range);
-                });
-            bld.AddPattern(aPos.Then(":."), parser => parser.Push("A", CharRange.All));
+                               parser.Push("A", actions.Literal(range));
+                           });
+            bld.AddPattern(aPos.Then(":."), (parser, actions) => parser.Push("A", actions.Literal(CharRange.All)));
 
             var charEscape = Pattern.Match(":\\").Then(Pattern.AnyOf(
-                Pattern.Match("x").Then(CharRange.HexDigits).Then(CharRange.HexDigits),
-                Pattern.Match("u").Then(CharRange.HexDigits).Then(CharRange.HexDigits).Then(CharRange.HexDigits)
-                    .Then(CharRange.HexDigits),
-                Pattern.Match("c").Then(CharRange.CreateBuilder().AddRange('a', 'z').AddRange('A', 'Z').Build()),
-                CharRange.CreateBuilder().AddChars("xucdDwWsS").Invert().Build()));
+                                                                     Pattern.Match("x").Then(CharRange.HexDigits).Then(CharRange.HexDigits),
+                                                                     Pattern.Match("u").Then(CharRange.HexDigits).Then(CharRange.HexDigits).Then(CharRange.HexDigits)
+                                                                            .Then(CharRange.HexDigits),
+                                                                     Pattern.Match("c").Then(CharRange.CreateBuilder().AddRange('a', 'z').AddRange('A', 'Z').Build()),
+                                                                     CharRange.CreateBuilder().AddChars("xucdDwWsS").Invert().Build()));
             var classEscape = Pattern.Match(":\\").Then(Pattern.AnyCharIn("dDsSwW"));
 
-            bld.AddPattern(aPos.Then(charEscape), parser => parser.Push("A", CharRange.Single(parser.ParseCharEscape())));
-            bld.AddPattern(aPos.Then(classEscape), parser => parser.Push("A", parser.ParseClassEscape()));
+            bld.AddPattern(aPos.Then(charEscape),  (parser, actions) => parser.Push("A", actions.Literal(CharRange.Single(parser.ParseCharEscape()))));
+            bld.AddPattern(aPos.Then(classEscape), (parser, actions) => parser.Push("A", actions.Literal(parser.ParseClassEscape())));
 
             //A: [R] | [^R]
             bld.AddPattern(aPos.Then(":[^"),
-                parser =>
-                {
-                    parser.charBuilder.Clear();
-                    parser.Push("[^", null);
-                });
+                           (parser, _) =>
+                           {
+                               parser.charBuilder.Clear();
+                               parser.Push("[^", null);
+                           });
             bld.AddPattern(aPos.Then(":["),
-                parser =>
-                {
-                    parser.charBuilder.Clear();
-                    parser.Push("[", null);
-                });
+                           (parser, _) =>
+                           {
+                               parser.charBuilder.Clear();
+                               parser.Push("[", null);
+                           });
             bld.AddPattern(aPos.Then("[R:]"),
-                parser =>
-                {
-                    parser.Pop(2);
-                    if (parser.caseI)
-                    {
-                        parser.charBuilder.ExpandCases();
-                    }
+                           (parser, actions) =>
+                           {
+                               parser.Pop(2);
+                               if (parser.caseI)
+                               {
+                                   parser.charBuilder.ExpandCases();
+                               }
 
-                    parser.Push("A", parser.charBuilder.Build());
-                });
+                               parser.Push("A", actions.Literal(parser.charBuilder.Build()));
+                           });
             bld.AddPattern(aPos.Then("[^R:]"),
-                parser =>
-                {
-                    parser.Pop(3);
-                    if (parser.caseI)
-                    {
-                        parser.charBuilder.ExpandCases();
-                    }
+                           (parser, actions) =>
+                           {
+                               parser.Pop(3);
+                               if (parser.caseI)
+                               {
+                                   parser.charBuilder.ExpandCases();
+                               }
 
-                    parser.Push("A", parser.charBuilder.Invert().Build());
-                });
+                               parser.Push("A", actions.Literal(parser.charBuilder.Invert().Build()));
+                           });
             var rPos = aPos.Then(Pattern.AnyOf("[^", "["));
 
             //R: e | R classEscape | R c | R c - c
-            bld.AddPattern(rPos, parser => parser.Push("R", null));
+            bld.AddPattern(rPos, (parser, _) => parser.Push("R", null));
             bld.AddPattern(rPos.Then("R").Then(classEscape),
-                parser =>
-                {
-                    parser.charBuilder.AddRange(parser.ParseClassEscape());
-                    parser.Pop(0);
-                });
+                           (parser, _) =>
+                           {
+                               parser.charBuilder.AddRange(parser.ParseClassEscape());
+                               parser.Pop(0);
+                           });
             bld.AddPattern(rPos.Then("Rc"),
-                parser =>
-                {
-                    parser.Pop(1);
-                    parser.charBuilder.AddRange(parser.clast, parser.clast);
-                });
-            bld.AddPattern(rPos.Then("Rc:-"), parser => parser.Push("-", null));
+                           (parser, _) =>
+                           {
+                               parser.Pop(1);
+                               parser.charBuilder.AddRange(parser.clast, parser.clast);
+                           });
+            bld.AddPattern(rPos.Then("Rc:-"), (parser, _) => parser.Push("-", null));
             bld.AddPattern(rPos.Then("Rc-c"),
-                parser =>
-                {
-                    parser.Pop(3);
-                    if (parser.clast < parser.cprev)
-                    {
-                        parser.charBuilder.AddRange(parser.clast, parser.cprev);
-                    }
-                    else
-                    {
-                        parser.charBuilder.AddRange(parser.cprev, parser.clast);
-                    }
-                });
+                           (parser, _) =>
+                           {
+                               parser.Pop(3);
+                               if (parser.clast < parser.cprev)
+                               {
+                                   parser.charBuilder.AddRange(parser.clast, parser.cprev);
+                               }
+                               else
+                               {
+                                   parser.charBuilder.AddRange(parser.cprev, parser.clast);
+                               }
+                           });
             var cpos = rPos.Then("R").ThenMaybe("c-");
 
             //class chars
             bld.AddPattern(cpos.Then(":").Then(CharRange.CreateBuilder().AddChars("-[]\\").Invert().Build()),
-                parser =>
-                {
-                    parser.cprev = parser.clast;
-                    parser.clast = parser.LastChar();
-                    parser.Push("c", null);
-                });
+                           (parser, _) =>
+                           {
+                               parser.cprev = parser.clast;
+                               parser.clast = parser.LastChar();
+                               parser.Push("c", null);
+                           });
             bld.AddPattern(cpos.Then(charEscape),
-                parser =>
-                {
-                    parser.cprev = parser.clast;
-                    parser.clast = parser.ParseCharEscape();
-                    parser.Push("c", null);
-                });
+                           (parser, _) =>
+                           {
+                               parser.cprev = parser.clast;
+                               parser.clast = parser.ParseCharEscape();
+                               parser.Push("c", null);
+                           });
 
             return bld.Build(null);
         }
 
-        private delegate void Action(RegexParser parser);
+        private delegate void Action(RegexParser<T> parser, IRegexParserActions<T> actions);
     }
 }
