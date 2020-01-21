@@ -137,6 +137,18 @@ namespace CodeHive.DfaLex
             }
         }
 
+        public bool TryGetSingle(out int codepoint)
+        {
+            codepoint = 0;
+            if (bounds.Length == 2 && bounds[0] == bounds[1] - 1)
+            {
+                codepoint = bounds[0];
+                return true;
+            }
+
+            return false;
+        }
+
         public int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
         {
             var startState = nfa.AddState();
