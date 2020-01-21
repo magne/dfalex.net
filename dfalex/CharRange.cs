@@ -16,6 +16,7 @@
  */
 
 using System;
+using System.Text;
 
 namespace CodeHive.DfaLex
 {
@@ -60,7 +61,8 @@ namespace CodeHive.DfaLex
         // characters in here are in value order and are unique
         // a character c is in this CharRange iff m_bounds contains an ODD number of
         // characters <= c
-        private readonly char[] bounds;
+        // TODO Should be private
+        internal readonly char[] bounds;
 
         private CharRange(char[] bounds)
         {
@@ -214,6 +216,41 @@ namespace CodeHive.DfaLex
             }
 
             return hash;
+        }
+
+        public override string ToString()
+        {
+            bool IsSingle(char[] b, int i) => b[i] == b[i + 1] - 1;
+
+            switch (bounds.Length)
+            {
+                case 1 when bounds[0] == '\u0000':
+                    return ".";
+                case 2 when IsSingle(bounds, 0):
+                    return bounds[0].ToString();
+            }
+
+            var sb = new StringBuilder();
+            sb.Append('[');
+
+            var local = bounds;
+            if (local.Length > 0 && local[0] == '\u0000')
+            {
+                sb.Append('^');
+                local = Complement().bounds;
+            }
+
+            for (var i = 0; i < local.Length; i += 2)
+            {
+                sb.Append(local[i]);
+                if (!IsSingle(local, i))
+                {
+                    sb.Append('-').Append(local[i + 1]);
+                }
+            }
+
+            sb.Append(']');
+            return sb.ToString();
         }
 
         /// <summary>

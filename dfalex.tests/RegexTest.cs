@@ -19,7 +19,29 @@ namespace CodeHive.DfaLex.Tests
             var bld = new DfaBuilder<string>();
             bld.AddPattern(r1, "if");
             bld.AddPattern(r2, "id");
-            var start = bld.Build(new HashSet<string>(new[] { "if", "id" }), accepts => accepts.First());
+            var start = bld.Build(new HashSet<string>(new[] {"if", "id"}), accepts => accepts.First());
+            PrintDot(start);
+        }
+
+        [Fact]
+        public void TestURI()
+        {
+            var regex = Pattern.Regex(@"(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?");
+            helper.WriteLine(regex.ToString());
+
+            var nfa = new Nfa<string>();
+            var accept = nfa.AddState("uri");
+            var strt = regex.AddToNfa(nfa, accept);
+            // PrintDot(nfa, strt);
+
+            var rawDfa = new DfaFromNfa<string>(nfa, new []{strt}, accept => accept.First()).GetDfa();
+            PrintDot(new SerializableDfa<string>(rawDfa).GetStartStates()[0]);
+            var minimalDfa = new DfaMinimizer<string>(rawDfa).GetMinimizedDfa();
+            PrintDot(new SerializableDfa<string>(minimalDfa).GetStartStates()[0]);
+
+            var bld = new DfaBuilder<string>();
+            bld.AddPattern(regex, "uri");
+            var start = bld.Build(new HashSet<string>(new[] {"uri"}), accepts => accepts.First());
             PrintDot(start);
         }
 

@@ -230,7 +230,7 @@ namespace CodeHive.DfaLex
 
             if (!"S".Equals(symStack.ToString()))
             {
-                throw new ArgumentException($"Invald regular expression: \"{str}\" has error at position {maxpos}");
+                throw new ArgumentException($"Invalid regular expression: \"{str}\" has error at position {maxpos}");
             }
 
             Debug.Assert(valStack.Count == 1);

@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace CodeHive.DfaLex
 {
@@ -663,6 +664,30 @@ namespace CodeHive.DfaLex
             {
                 return new CatPattern(then.Reversed, first.Reversed);
             }
+
+            public override string ToString()
+            {
+                var sb = new StringBuilder();
+                if (first is UnionPattern)
+                {
+                    sb.Append('(').Append(first).Append(')');
+                }
+                else
+                {
+                    sb.Append(first);
+                }
+
+                if (then is UnionPattern)
+                {
+                    sb.Append('(').Append(then).Append(')');
+                }
+                else
+                {
+                    sb.Append(then);
+                }
+
+                return sb.ToString();
+            }
         }
 
         [Serializable]
@@ -699,6 +724,8 @@ namespace CodeHive.DfaLex
 
                 return new WrapPattern(revmatch);
             }
+
+            public override string ToString() => tomatch.ToString();
         }
 
         [Serializable]
@@ -726,6 +753,8 @@ namespace CodeHive.DfaLex
             {
                 return this;
             }
+
+            public override string ToString() => string.Empty;
         }
 
         [Serializable]
@@ -768,6 +797,8 @@ namespace CodeHive.DfaLex
 
                 return new StringPattern(tomatch.Reverse());
             }
+
+            public override string ToString() => tomatch;
         }
 
         [Serializable]
@@ -821,6 +852,8 @@ namespace CodeHive.DfaLex
 
                 return new StringIPattern(tomatch.Reverse());
             }
+
+            public override string ToString() => $"(?i){tomatch}(?-i)";
         }
 
         [Serializable]
@@ -874,6 +907,8 @@ namespace CodeHive.DfaLex
 
                 return new RepeatingPattern(patternReversed, needAtLeastOne, lazy);
             }
+
+            public override string ToString() => pattern is CharRange ? $"{pattern}{(needAtLeastOne ? '+' : '*')}" : $"({pattern}){(needAtLeastOne ? '+' : '*')}";
         }
 
         [Serializable]
@@ -921,6 +956,8 @@ namespace CodeHive.DfaLex
 
                 return new OptionalPattern(revpat, lazy);
             }
+
+            public override string ToString() => pattern is CharRange ? $"{pattern}?" : $"({pattern})?";
         }
 
         [Serializable]
@@ -1022,6 +1059,8 @@ namespace CodeHive.DfaLex
 
                 return (f & matchFlag) != 0;
             }
+
+            public override string ToString() => string.Join("|", choices.Select(c => c.ToString()));
         }
     }
 

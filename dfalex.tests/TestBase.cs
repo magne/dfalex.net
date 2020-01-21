@@ -18,7 +18,7 @@ namespace CodeHive.DfaLex.Tests
 
         private static readonly IDictionary<string, string> Resources = new Dictionary<string, string>();
 
-        private readonly ITestOutputHelper helper;
+        protected readonly ITestOutputHelper helper;
 
         protected TestBase(ITestOutputHelper helper)
         {
