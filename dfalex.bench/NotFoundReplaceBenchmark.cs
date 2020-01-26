@@ -24,7 +24,7 @@ namespace CodeHive.DfaLex.Bench
 
             src = buf.ToString();
 
-            dotnetPat = new Regex(Pattern, RegexOptions.Compiled);
+            dotnetPat = new Regex(Pattern, System.Text.RegularExpressions.RegexOptions.Compiled);
 
             replacer = CreateStringReplacer();
 

@@ -116,7 +116,7 @@ namespace CodeHive.DfaLex
         /// <returns>a pattern that implements the regular expression</returns>
         public static Pattern RegexI(string regex)
         {
-            return Match(RegexParser.Parse(regex, true));
+            return Match(RegexParser.Parse(regex, RegexOptions.IgnoreCase));
         }
 
         /// <summary>
