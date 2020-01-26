@@ -24,9 +24,9 @@ namespace CodeHive.DfaLex
     {
         private readonly int             acceptSetIndex;
         private readonly int             transitionCount;
-        private readonly NfaTransition[] transitionBuf;
+        private readonly DfaTransition[] transitionBuf;
 
-        internal DfaStateInfo(List<NfaTransition> transitions, int acceptSetIndex)
+        internal DfaStateInfo(List<DfaTransition> transitions, int acceptSetIndex)
         {
             this.acceptSetIndex = acceptSetIndex;
             transitionCount = transitions.Count;
@@ -43,12 +43,12 @@ namespace CodeHive.DfaLex
             return transitionCount;
         }
 
-        public NfaTransition GetTransition(int index)
+        public DfaTransition GetTransition(int index)
         {
             return transitionBuf[index];
         }
 
-        public void ForEachTransition(Action<NfaTransition> consumer)
+        public void ForEachTransition(Action<DfaTransition> consumer)
         {
             for (var i = 0; i < transitionCount; ++i)
             {
