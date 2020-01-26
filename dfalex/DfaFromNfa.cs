@@ -66,7 +66,7 @@ namespace CodeHive.DfaLex
         private void Build()
         {
             var nfaStateSet = new CompactIntSubset(nfa.NumStates);
-            var dfaStateTransitions = new List<NfaTransition>();
+            var dfaStateTransitions = new List<DfaTransition>();
             var transitionQ = new List<NfaTransition>(1000);
 
             //Create the DFA start states
@@ -167,7 +167,7 @@ namespace CodeHive.DfaLex
                         AddNfaStateAndEpsilonsToSubset(nfaStateSet, trans.State);
                     }
 
-                    dfaStateTransitions.Add(new NfaTransition(startc, endc, GetDfaState(nfaStateSet)));
+                    dfaStateTransitions.Add(new DfaTransition(startc, endc, GetDfaState(nfaStateSet)));
 
                     minc = (char) (endc + 1);
                     if (minc < endc)
@@ -196,11 +196,11 @@ namespace CodeHive.DfaLex
             {
                 var newNfaState = tempNfaClosureList.Dequeue();
                 nfa.ForStateEpsilons(newNfaState,
-                    src =>
+                    trans =>
                     {
-                        if (dest.Add(src))
+                        if (dest.Add(trans.State))
                         {
-                            tempNfaClosureList.Enqueue(src);
+                            tempNfaClosureList.Enqueue(trans.State);
                         }
                     });
             }
@@ -233,7 +233,7 @@ namespace CodeHive.DfaLex
             return dfaStateNum;
         }
 
-        private DfaStateInfo CreateStateInfo(IntListKey sig, List<NfaTransition> transitions)
+        private DfaStateInfo CreateStateInfo(IntListKey sig, List<DfaTransition> transitions)
         {
             //calculate the set of accepts
             tempResultSet.Clear();

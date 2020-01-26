@@ -73,7 +73,7 @@ namespace CodeHive.DfaLex
         private void CreateNewStates()
         {
             minStates.Clear();
-            var tempTrans = new List<NfaTransition>();
+            var tempTrans = new List<DfaTransition>();
             foreach (var statenum in partitionOrderStates)
             {
                 var partnum = origOrderPartNums[statenum];
@@ -106,7 +106,7 @@ namespace CodeHive.DfaLex
                         endc = trans.LastChar;
                     }
 
-                    tempTrans.Add(new NfaTransition(startc, endc, dest));
+                    tempTrans.Add(new DfaTransition(startc, endc, dest));
                 }
 
                 minStates.Add(new DfaStateInfo(tempTrans, instate.GetAcceptSetIndex()));

@@ -1,6 +1,5 @@
 /*
- * Copyright 2015 Matthew Timmermans
- * Copyright 2019 Magne Rasmussen
+ * Copyright 2020 Magne Rasmussen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +17,9 @@
 namespace CodeHive.DfaLex
 {
     /// <summary>
-    /// A transition in a <see cref="Nfa{TResult}"/>
+    /// A transition between <see cref="DfaStateInfo"/>
     /// </summary>
-    public sealed class NfaTransition
+    internal sealed class DfaTransition
     {
         /// <summary>
         /// The first character that triggers this transition.
@@ -38,23 +37,16 @@ namespace CodeHive.DfaLex
         public readonly int State;
 
         /// <summary>
-        /// The priority of this transition.
-        /// </summary>
-        public NfaTransitionPriority Priority { get; }
-
-        /// <summary>
         /// Creates a new immutable NFA transtition.
         /// </summary>
         /// <param name="firstChar">The first character that triggers this transition.</param>
         /// <param name="lastChar">The last character that triggers this transition.</param>
         /// <param name="state">The target state of this transition.</param>
-        /// <param name="priority">The priority of this transition.</param>
-        public NfaTransition(char firstChar, char lastChar, int state, NfaTransitionPriority priority)
+        public DfaTransition(char firstChar, char lastChar, int state)
         {
             FirstChar = firstChar;
             LastChar = lastChar;
             State = state;
-            Priority = priority;
         }
 
         public override bool Equals(object obj)
@@ -64,9 +56,9 @@ namespace CodeHive.DfaLex
                 return true;
             }
 
-            if (obj is NfaTransition t)
+            if (obj is DfaTransition t)
             {
-                return FirstChar == t.FirstChar && LastChar == t.LastChar && State == t.State && Priority == t.Priority;
+                return FirstChar == t.FirstChar && LastChar == t.LastChar && State == t.State;
             }
 
             return false;
@@ -78,7 +70,6 @@ namespace CodeHive.DfaLex
             hash = (hash ^ FirstChar) * 16777619;
             hash = (hash ^ LastChar) * 16777619;
             hash = (hash ^ State) * 16777619;
-            hash = (hash ^ (int) Priority) * 16777619;
             return hash ^ (hash >> 16);
         }
     }
