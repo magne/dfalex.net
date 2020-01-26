@@ -58,16 +58,28 @@ namespace CodeHive.DfaLex
         /// <summary>
         /// Parse a regular expression.
         /// </summary>
-        /// <param name="str">a string containing the expression to parse</param>
-        /// <param name="caseIndependent">true to make it case independent</param>
+        /// <param name="regex">a string containing the expression to parse</param>
+        /// <param name="options">options that influence the parse</param>
         /// <returns>a <see cref="IMatchable"/> that implements the regular expression</returns>
-        public static IMatchable Parse(string str, bool caseIndependent = false)
+        public static IMatchable Parse(string regex, RegexOptions options = RegexOptions.None)
         {
-            return new RegexParser(str, caseIndependent).Parse();
+            return new RegexParser(regex, options).Parse();
         }
 
-        private RegexParser(string str, bool caseI)
-            : base(Actions, str, caseI)
+        /// <summary>
+        /// Parse a regular expression.
+        /// </summary>
+        /// <param name="regex">a string containing the expression to parse</param>
+        /// <param name="caseIndependent">true to make it case independent</param>
+        /// <returns>a <see cref="IMatchable"/> that implements the regular expression</returns>
+        [Obsolete("Use RegexParser.Parse(regex, RegexOptions.IgnoreCase) instead.")]
+        public static IMatchable Parse(string regex, bool caseIndependent)
+        {
+            return Parse(regex, caseIndependent ? RegexOptions.IgnoreCase : RegexOptions.None);
+        }
+
+        private RegexParser(string str, RegexOptions options)
+            : base(Actions, str, options)
         { }
 
         private sealed class MatchableRegexParserActions : IRegexParserActions<IMatchable>
@@ -132,11 +144,12 @@ namespace CodeHive.DfaLex
         private readonly Stack<T>                valStack   = new Stack<T>();
         private readonly Stack<DfaState<Action>> stateStack = new Stack<DfaState<Action>>();
 
-        protected RegexParser(IRegexParserActions<T> actions, string str, bool caseI)
+        protected RegexParser(IRegexParserActions<T> actions, string str, RegexOptions options)
         {
             this.actions = actions;
             this.str = str;
-            this.caseI = caseI;
+
+            caseI = (options & RegexOptions.IgnoreCase) == RegexOptions.IgnoreCase;
         }
 
         protected T Parse()

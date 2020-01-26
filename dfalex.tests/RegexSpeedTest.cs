@@ -43,7 +43,7 @@ namespace CodeHive.DfaLex.Tests
         private int TimeDotNet(string src, string patString)
         {
             var count = 0;
-            var options = RegexOptions.Compiled;
+            var options = System.Text.RegularExpressions.RegexOptions.Compiled;
             var dotnetPat = new Regex(patString, options);
             var stopWatch = new Stopwatch();
             stopWatch.Start();
