@@ -95,7 +95,7 @@ namespace CodeHive.DfaLex
         /// </summary>
         /// <param name="from">The state to transition from</param>
         /// <param name="to">The state to transition to</param>
-        public void AddEpsilon(int from, int to)
+        public void AddEpsilon(int from, int to, NfaTransitionPriority priority = NfaTransitionPriority.Normal)
         {
             var list = stateEpsilons[from];
             if (list == null)
@@ -104,7 +104,7 @@ namespace CodeHive.DfaLex
                 stateEpsilons[from] = list;
             }
 
-            list.Add(new NfaEpsilon(to, NfaTransitionPriority.Normal));
+            list.Add(new NfaEpsilon(to, priority));
         }
 
         /// <summary>

@@ -367,8 +367,8 @@ namespace CodeHive.DfaLex
             bld.AddPattern(sPos.Then("S|C"),
                            (parser, actions) =>
                            {
-                               var p1 = parser.Pop(2);
-                               var p2 = parser.Pop(1);
+                               var p2 = parser.Pop(2);
+                               var p1 = parser.Pop(1);
                                parser.Push("S", actions.Alternate(p1, p2));
                            });
             var cPos = sPos.ThenMaybe("S|");

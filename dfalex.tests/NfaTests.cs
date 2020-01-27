@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -8,20 +9,50 @@ namespace CodeHive.DfaLex.Tests
         public NfaTests(ITestOutputHelper helper) : base(helper)
         { }
 
-        [Fact]
-        public void TestNfa()
+        public static IEnumerable<object[]> GetMatchables()
+        {
+            static object[] Make(string section, string regex, IMatchable matchable, bool reversed = false) =>
+                new object[] {(section, regex, matchable, reversed).Labeled($"{section}: {regex}")};
+
+            yield return Make("Catenate",  "ab",    Pattern.Match("a").Then("b"), true);
+            yield return Make("Alternate", "a|b|c", Pattern.AnyOf("a", "b", "c"));
+            yield return Make("Question",  "a?",    Pattern.Maybe("a"));
+            yield return Make("Star",      "a*",    Pattern.MaybeRepeat("a"));
+            yield return Make("Plus",      "a+",    Pattern.Repeat("a"));
+        }
+
+        [Theory]
+        [MemberData(nameof(GetMatchables))]
+        public void CheckMatchable(Labeled<(string section, string _, IMatchable matchable, bool reversed)> t)
+        {
+            CheckNfa(t.Data.matchable, t.Data.section);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetMatchables))]
+        public void CheckRegex(Labeled<(string section, string regex, IMatchable _, bool reversed)> t)
+        {
+            CheckNfa(Pattern.Regex(t.Data.regex), t.Data.section);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetMatchables))]
+        public void CheckReverse(Labeled<(string section, string _, IMatchable matchable, bool reversed)> t)
+        {
+            var section = t.Data.reversed ? $"{t.Data.section} Reversed" : t.Data.section;
+            CheckNfa(t.Data.matchable.Reversed, section);
+        }
+
+        private void CheckNfa(IMatchable regex, string resourceSection)
         {
             var nfa = new Nfa<int>();
             var start = nfa.AddState();
             var accept = nfa.AddState(1);
 
-            var state1 = Pattern.Regex("abc+").AddToNfa(nfa, accept);
-            nfa.AddEpsilon(start, state1);
-            var state2 = Pattern.Regex("abc+").Reversed.AddToNfa(nfa, accept);
-            nfa.AddEpsilon(start, state2);
+            var state = regex.AddToNfa(nfa, accept);
+            nfa.AddEpsilon(start, state);
 
-            PrintDot(nfa, state1);
-            CheckNfa(nfa, state1, "NfaTests.out.txt");
+            CheckNfa(nfa, state, $"NfaTests.out.txt#{resourceSection}", true);
         }
     }
 }
