@@ -374,7 +374,7 @@ namespace CodeHive.DfaLex.Tests
 
             protected override void WriteEpsilon(TState state, TState target, bool lowPriority)
             {
-                Buf.AppendLine($"{Ctx.StateName(state, false)} -> {Ctx.StateName(target, false)} [label=\"{(lowPriority ? "-" : " ")}ε\"]");
+                Buf.AppendLine($"{Ctx.StateName(state, false)} -> {Ctx.StateName(target, false)} [label=\"{(lowPriority ? "-" : string.Empty)}ε\"]");
             }
 
             protected override void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority)
@@ -386,7 +386,7 @@ namespace CodeHive.DfaLex.Tests
                     label.Append('-').Append(PrintChar(cMax, true));
                 }
 
-                Buf.AppendLine($"{Ctx.StateName(state)} -> {Ctx.StateName(target, false)} [label=\"{(lowPriority ? "-" : " ")}{label}\"]");
+                Buf.AppendLine($"{Ctx.StateName(state)} -> {Ctx.StateName(target, false)} [label=\"{(lowPriority ? "-" : string.Empty)}{label}\"]");
             }
 
             public override string ToString()

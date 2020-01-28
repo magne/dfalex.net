@@ -241,7 +241,7 @@ namespace CodeHive.DfaLex
             var patterns = new IMatchable[strings.Length + 2];
             patterns[0] = Match(p0);
             patterns[1] = Match(p1);
-            for (var i = 1; i < strings.Length; ++i)
+            for (var i = 0; i < strings.Length; ++i)
             {
                 patterns[i + 2] = Match(strings[i]);
             }
@@ -261,7 +261,7 @@ namespace CodeHive.DfaLex
             var patterns = new IMatchable[strings.Length + 2];
             patterns[0] = MatchI(p0);
             patterns[1] = MatchI(p1);
-            for (var i = 1; i < strings.Length; ++i)
+            for (var i = 0; i < strings.Length; ++i)
             {
                 patterns[i + 2] = MatchI(strings[i]);
             }
@@ -656,7 +656,7 @@ namespace CodeHive.DfaLex
             public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
             {
                 var repState = nfa.AddState();
-                nfa.AddEpsilon(repState, targetState);
+                nfa.AddEpsilon(repState, targetState, NfaTransitionPriority.Low);
                 var startState = pattern.AddToNfa(nfa, repState);
                 nfa.AddEpsilon(repState, startState);
                 if (needAtLeastOne || pattern.MatchesEmpty)
@@ -665,7 +665,7 @@ namespace CodeHive.DfaLex
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(skipState, targetState);
+                nfa.AddEpsilon(skipState, targetState, NfaTransitionPriority.Low);
                 nfa.AddEpsilon(skipState, startState);
                 return skipState;
             }
@@ -710,7 +710,7 @@ namespace CodeHive.DfaLex
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(skipState, targetState);
+                nfa.AddEpsilon(skipState, targetState, NfaTransitionPriority.Low);
                 nfa.AddEpsilon(skipState, startState);
                 return skipState;
             }
@@ -751,7 +751,7 @@ namespace CodeHive.DfaLex
             }
 
             private readonly IMatchable[] choices;
-            private volatile Checks        flags = 0;
+            private volatile Checks       flags = 0;
 
             public UnionPattern(IMatchable[] choices)
             {
@@ -761,11 +761,29 @@ namespace CodeHive.DfaLex
 
             public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
             {
-                var startState = nfa.AddState();
-                foreach (var pattern in choices)
+                if (choices.Length == 0)
                 {
-                    nfa.AddEpsilon(startState, pattern.AddToNfa(nfa, targetState));
+                    return targetState;
                 }
+
+                if (choices.Length == 1)
+                {
+                    return choices[0].AddToNfa(nfa, targetState);
+                }
+
+                var startState = nfa.AddState();
+
+                var newChoices = new IMatchable[choices.Length - 1];
+                Array.Copy(choices, newChoices, newChoices.Length);
+                var pattern = new UnionPattern(newChoices);
+
+                var endState = nfa.AddState();
+                nfa.AddEpsilon(endState, targetState, NfaTransitionPriority.Low);
+                nfa.AddEpsilon(startState, choices[choices.Length - 1].AddToNfa(nfa, endState));
+
+                endState = nfa.AddState();
+                nfa.AddEpsilon(endState, targetState);
+                nfa.AddEpsilon(startState, pattern.AddToNfa(nfa, endState));
 
                 return startState;
             }
@@ -822,13 +840,17 @@ namespace CodeHive.DfaLex
 
     internal static class StringExtensions
     {
-        private static IEnumerable<string> GraphemeClusters(this string s) {
+        private static IEnumerable<string> GraphemeClusters(this string s)
+        {
             var enumerator = StringInfo.GetTextElementEnumerator(s);
-            while(enumerator.MoveNext()) {
-                yield return (string)enumerator.Current;
+            while (enumerator.MoveNext())
+            {
+                yield return (string) enumerator.Current;
             }
         }
-        internal static string ReverseGraphemeClusters(this string s) {
+
+        internal static string ReverseGraphemeClusters(this string s)
+        {
             return string.Join("", s.GraphemeClusters().Reverse().ToArray());
         }
 
