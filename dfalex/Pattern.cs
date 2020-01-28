@@ -150,6 +150,36 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Create a pattern that lazily matches one or more occurrences of a given pattern.
+        /// </summary>
+        /// <param name="pattern">given pattern</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern RepeatLazy(IMatchable pattern)
+        {
+            return new RepeatingPattern(pattern, true, true);
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches one or more occurrences of a particular string, case dependent
+        /// </summary>
+        /// <param name="str"> the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern RepeatLazy(string str)
+        {
+            return RepeatLazy(Match(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches one or more occurrences of a particular string, case independent
+        /// </summary>
+        /// <param name="str"> the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern RepeatLazyI(string str)
+        {
+            return RepeatLazy(MatchI(str));
+        }
+
+        /// <summary>
         /// Create a pattern that matches a given pattern or the empty string.
         /// </summary>
         /// <param name="pat">given pattern</param>
@@ -180,6 +210,36 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Create a pattern that lazily matches a given pattern or the empty string.
+        /// </summary>
+        /// <param name="pat">given pattern</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeLazy(IMatchable pat)
+        {
+            return new OptionalPattern(pat, true);
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches a particular string, or the empty string, case dependent
+        /// </summary>
+        /// <param name="str">the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeLazy(string str)
+        {
+            return MaybeLazy(Match(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches a particular string, or the empty string, case independent
+        /// </summary>
+        /// <param name="str">the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeLazyI(string str)
+        {
+            return MaybeLazy(MatchI(str));
+        }
+
+        /// <summary>
         /// Create a pattern that matches zero or more occurrences of a given pattern.
         /// </summary>
         /// <param name="pattern">given pattern</param>
@@ -207,6 +267,36 @@ namespace CodeHive.DfaLex
         public static Pattern MaybeRepeatI(string str)
         {
             return MaybeRepeat(MatchI(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches zero or more occurrences of a given pattern.
+        /// </summary>
+        /// <param name="pattern">given pattern</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeRepeatLazy(IMatchable pattern)
+        {
+            return new RepeatingPattern(pattern, false, true);
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches zero or more occurrences of a particular string, case dependent
+        /// </summary>
+        /// <param name="str">the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeRepeatLazy(string str)
+        {
+            return MaybeRepeatLazy(Match(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches zero or more occurrences of a particular string, case independent
+        /// </summary>
+        /// <param name="str">the string to match</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern MaybeRepeatLazyI(string str)
+        {
+            return MaybeRepeatLazy(MatchI(str));
         }
 
         /// <summary>
@@ -360,6 +450,36 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by one or more occurrences of a given pattern.
+        /// </summary>
+        /// <param name="pattern">the given pattern</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenRepeatLazy(IMatchable pattern)
+        {
+            return Then(RepeatLazy(pattern));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by one or more occurrences of a given string, case dependent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenRepeatLazy(string str)
+        {
+            return Then(RepeatLazy(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by one or more occurrences of a given string, case independent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenRepeatLazyI(string str)
+        {
+            return Then(RepeatLazyI(str));
+        }
+
+        /// <summary>
         /// Create a pattern that matches strings from this pattern, maybe followed by a match of the given pattern.
         /// </summary>
         /// <param name="pattern">the given pattern</param>
@@ -390,6 +510,36 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, maybe followed by a match of the given pattern.
+        /// </summary>
+        /// <param name="pattern">the given pattern</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeLazy(IMatchable pattern)
+        {
+            return Then(MaybeLazy(pattern));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, maybe followed by a match of the given string, case dependent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeLazy(string str)
+        {
+            return Then(MaybeLazy(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, maybe followed by a match of the given string, case independent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeLazyI(string str)
+        {
+            return Then(MaybeLazyI(str));
+        }
+
+        /// <summary>
         /// Create a pattern that matches strings from this pattern, followed by zero or more occurrences of the given pattern.
         /// </summary>
         /// <param name="pattern">the given pattern</param>
@@ -417,6 +567,36 @@ namespace CodeHive.DfaLex
         public Pattern ThenMaybeRepeatI(string str)
         {
             return Then(MaybeRepeatI(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by zero or more occurrences of the given pattern.
+        /// </summary>
+        /// <param name="pattern">the given pattern</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeRepeatLazy(IMatchable pattern)
+        {
+            return Then(MaybeRepeatLazy(pattern));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by zero or more occurrences of the given string, case dependent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeRepeatLazy(string str)
+        {
+            return Then(MaybeRepeatLazy(str));
+        }
+
+        /// <summary>
+        /// Create a pattern that lazily matches strings from this pattern, followed by zero or more occurrences of the given string, case dependent.
+        /// </summary>
+        /// <param name="str">the given string</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenMaybeRepeatLazyI(string str)
+        {
+            return Then(MaybeRepeatLazyI(str));
         }
 
         public abstract int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState);
@@ -646,27 +826,30 @@ namespace CodeHive.DfaLex
         {
             private readonly IMatchable pattern;
             private readonly bool       needAtLeastOne;
+            private readonly bool       lazy;
 
-            public RepeatingPattern(IMatchable pattern, bool needAtLeastOne)
+            public RepeatingPattern(IMatchable pattern, bool needAtLeastOne, bool lazy = false)
             {
                 this.pattern = pattern;
                 this.needAtLeastOne = needAtLeastOne;
+                this.lazy = lazy;
             }
 
             public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
             {
                 var repState = nfa.AddState();
-                nfa.AddEpsilon(repState, targetState, NfaTransitionPriority.Low);
+                nfa.AddEpsilon(repState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low);
                 var startState = pattern.AddToNfa(nfa, repState);
-                nfa.AddEpsilon(repState, startState);
                 if (needAtLeastOne || pattern.MatchesEmpty)
                 {
+                    nfa.AddEpsilon(repState, startState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal);
                     return startState;
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(skipState, targetState, NfaTransitionPriority.Low);
-                nfa.AddEpsilon(skipState, startState);
+                nfa.AddEpsilon(repState, skipState);
+                nfa.AddEpsilon(skipState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low);
+                nfa.AddEpsilon(skipState, startState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal);
                 return skipState;
             }
 
@@ -687,7 +870,7 @@ namespace CodeHive.DfaLex
                     return this;
                 }
 
-                return new RepeatingPattern(patternReversed, needAtLeastOne);
+                return new RepeatingPattern(patternReversed, needAtLeastOne, lazy);
             }
         }
 
@@ -695,10 +878,12 @@ namespace CodeHive.DfaLex
         private class OptionalPattern : Pattern
         {
             private readonly IMatchable pattern;
+            private readonly bool       lazy;
 
-            public OptionalPattern(IMatchable pattern)
+            public OptionalPattern(IMatchable pattern, bool lazy = false)
             {
                 this.pattern = pattern;
+                this.lazy = lazy;
             }
 
             public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
@@ -710,8 +895,8 @@ namespace CodeHive.DfaLex
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(skipState, targetState, NfaTransitionPriority.Low);
-                nfa.AddEpsilon(skipState, startState);
+                nfa.AddEpsilon(skipState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low);
+                nfa.AddEpsilon(skipState, startState,  lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal);
                 return skipState;
             }
 
@@ -732,7 +917,7 @@ namespace CodeHive.DfaLex
                     return this;
                 }
 
-                return new OptionalPattern(revpat);
+                return new OptionalPattern(revpat, lazy);
             }
         }
 
@@ -778,11 +963,11 @@ namespace CodeHive.DfaLex
                 var pattern = new UnionPattern(newChoices);
 
                 var endState = nfa.AddState();
-                nfa.AddEpsilon(endState, targetState, NfaTransitionPriority.Low);
+                nfa.AddEpsilon(endState,   targetState, NfaTransitionPriority.Low);
                 nfa.AddEpsilon(startState, choices[choices.Length - 1].AddToNfa(nfa, endState));
 
                 endState = nfa.AddState();
-                nfa.AddEpsilon(endState, targetState);
+                nfa.AddEpsilon(endState,   targetState);
                 nfa.AddEpsilon(startState, pattern.AddToNfa(nfa, endState));
 
                 return startState;

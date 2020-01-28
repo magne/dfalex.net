@@ -43,6 +43,15 @@ S1:1
 S2
     a -> S1:1
 
+[Question Lazy]
+S0
+    ε -> S1:1
+   -ε -> S2
+S1:1
+    (done)
+S2
+    a -> S1:1
+
 [Star]
 S0
    -ε -> S1:1
@@ -53,7 +62,19 @@ S2
     a -> S3
 S3
    -ε -> S1:1
-    ε -> S2
+    ε -> S0
+
+[Star Lazy]
+S0
+    ε -> S1:1
+   -ε -> S2
+S1:1
+    (done)
+S2
+    a -> S3
+S3
+    ε -> S1:1
+    ε -> S0
 
 [Plus]
 S0
@@ -61,5 +82,14 @@ S0
 S1
    -ε -> S2:1
     ε -> S0
+S2:1
+    (done)
+
+[Plus Lazy]
+S0
+    a -> S1
+S1
+    ε -> S2:1
+   -ε -> S0
 S2:1
     (done)

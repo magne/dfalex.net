@@ -24,17 +24,17 @@ namespace CodeHive.DfaLex
         /// <summary>
         /// The first character that triggers this transition.
         /// </summary>
-        public readonly char FirstChar;
+        public char FirstChar { get; }
 
         /// <summary>
         /// The last character that triggers this transition.
         /// </summary>
-        public readonly char LastChar;
+        public char LastChar { get; }
 
         /// <summary>
         /// The target state of this transition.
         /// </summary>
-        public readonly int State;
+        public int State { get; }
 
         /// <summary>
         /// Creates a new immutable NFA transtition.
