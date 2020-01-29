@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace CodeHive.DfaLex
@@ -32,14 +30,14 @@ namespace CodeHive.DfaLex
         /// Get the position of the start of the last match in the string.
         /// </summary>
         /// <returns>the index of the first character in the last match</returns>
-        /// <exception cref="InvalidOperationException">unless called after a valid call to <see cref="IEnumerator.MoveNext"/></exception>
+        /// <exception cref="System.InvalidOperationException">unless called after a valid call to <see cref="System.Collections.IEnumerator.MoveNext"/></exception>
         int MatchStartPosition { get; }
 
         /// <summary>
         /// Get the position of the end of the last match in the string.
         /// </summary>
         /// <returns>the index after the last character in the last match</returns>
-        /// <exception cref="InvalidOperationException">unless called after a valid call to <see cref="IEnumerator.MoveNext"/></exception>
+        /// <exception cref="System.InvalidOperationException">unless called after a valid call to <see cref="System.Collections.IEnumerator.MoveNext"/></exception>
         int MatchEndPosition { get; }
 
         /// <summary>
@@ -48,14 +46,14 @@ namespace CodeHive.DfaLex
         /// Note that a new string is allocated by the first call to this method for each match.
         /// </summary>
         /// <returns>the source portion of the source string corresponding to the last match</returns>
-        /// <exception cref="InvalidOperationException">unless called after a valid call to <see cref="IEnumerator.MoveNext"/></exception>
+        /// <exception cref="System.InvalidOperationException">unless called after a valid call to <see cref="System.Collections.IEnumerator.MoveNext"/></exception>
         string MatchValue { get; }
 
         /// <summary>
         /// Get the result of the last match.
         /// </summary>
-        /// <returns>the TResult returned by the last call to <see cref="IEnumerator.MoveNext"/></returns>
-        /// <exception cref="InvalidOperationException">unless called after a valid call to <see cref="IEnumerator.MoveNext"/></exception>
+        /// <returns>the TResult returned by the last call to <see cref="System.Collections.IEnumerator.MoveNext"/></returns>
+        /// <exception cref="System.InvalidOperationException">unless called after a valid call to <see cref="System.Collections.IEnumerator.MoveNext"/></exception>
         TResult MatchResult { get; }
 
         /// <summary>
@@ -63,12 +61,12 @@ namespace CodeHive.DfaLex
         ///
         /// The next match returned will be the one (if any) that starts at a position &gt;= pos
         ///
-        /// IMPORTANT:  If this method returns true, you must call <see cref="IEnumerator.MoveNext"/> to get the result
-        /// of the next match.  Until then calls to the the match accessor methods will continue to return information
-        /// from the previous call to <see cref="IEnumerator.MoveNext"/>.
+        /// IMPORTANT:  If this method returns true, you must call <see cref="System.Collections.IEnumerator.MoveNext"/>
+        /// to get the result of the next match.  Until then calls to the the match accessor methods will continue to
+        /// return information from the previous call to <see cref="System.Collections.IEnumerator.MoveNext"/>.
         /// </summary>
         /// <param name="pos">new position in the source string to search from</param>
-        /// <returns>true if there is a match after the given position.  The same value will be returned from <see cref="IEnumerator.MoveNext"/></returns>
+        /// <returns>true if there is a match after the given position.  The same value will be returned from <see cref="System.Collections.IEnumerator.MoveNext"/></returns>
         bool Reposition(int pos);
     }
 }
