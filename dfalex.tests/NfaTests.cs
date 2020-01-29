@@ -59,7 +59,7 @@ namespace CodeHive.DfaLex.Tests
             var state = regex.AddToNfa(nfa, accept);
             nfa.AddEpsilon(start, state);
 
-            CheckNfa(nfa, state, $"NfaTests.out.txt#{resourceSection}", true);
+            CheckNfa(nfa, state, $"NfaTests.out.txt#{resourceSection}");
         }
     }
 }

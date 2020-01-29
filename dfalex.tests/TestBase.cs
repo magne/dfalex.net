@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Xunit;
+using FluentAssertions;
 using Xunit.Abstractions;
 
 namespace CodeHive.DfaLex.Tests
@@ -55,25 +55,30 @@ namespace CodeHive.DfaLex.Tests
         internal void CheckNfa<T>(Nfa<T> nfa, int start, string resource, bool doStdout = false)
         {
             var have = PrettyPrinter.Print(nfa, start);
-            if (doStdout)
-            {
-                helper.WriteLine(have);
-            }
+            CheckStates(have, resource, doStdout);
+        }
 
-            var want = ReadResource(resource);
-            Assert.Equal(want, have);
+        internal void CheckDfa<T>(RawDfa<T> dfa, string resource, bool doStdout = false)
+        {
+            var have = PrettyPrinter.Print(dfa);
+            CheckStates(have, resource, doStdout);
         }
 
         internal void CheckDfa<T>(DfaState<T> start, string resource, bool doStdout = false)
         {
             var have = PrettyPrinter.Print(start);
+            CheckStates(have, resource, doStdout);
+        }
+
+        private void CheckStates(string states, string resource, bool doStdout)
+        {
             if (doStdout)
             {
-                helper.WriteLine(have);
+                helper.WriteLine(states);
             }
 
-            var want = ReadResource(resource);
-            Assert.Equal(want, have);
+            var expected = ReadResource(resource);
+            states.Should().Be(expected);
         }
 
         internal void PrintDot<T>(Nfa<T> nfa, int start)
@@ -84,6 +89,11 @@ namespace CodeHive.DfaLex.Tests
         internal void PrintDot<T>(DfaState<T> start)
         {
             helper.WriteLine(PrettyPrinter.PrintDot(start));
+        }
+
+        internal void PrintDot<T>(RawDfa<T> rawDfa)
+        {
+            helper.WriteLine(PrettyPrinter.PrintDot(rawDfa));
         }
 
         protected string ReadResource(string resource)
