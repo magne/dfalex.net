@@ -51,9 +51,19 @@ namespace CodeHive.DfaLex.Tests
             p2 = Pattern.Regex("A(C|D)*B");
             Check(p1, p2);
 
-            p1 = Pattern.Match("A").ThenMaybeRepeat(Pattern.AnyOf("C", "D")).Then("B");
-            p2 = Pattern.Regex("A(C|D)+?B");
+#pragma warning disable 618
+            p1 = Pattern.Match("A").ThenMaybe(Pattern.AnyOf("C", "D")).Then("B");
+            p2 = Pattern.Regex("A(C|D)??B", RegexOptions.Legacy);
             Check(p1, p2);
+
+            p1 = Pattern.Match("A").ThenMaybeRepeat(Pattern.AnyOf("C", "D")).Then("B");
+            p2 = Pattern.Regex("A(C|D)+?B", RegexOptions.Legacy);
+            Check(p1, p2);
+
+            p1 = Pattern.Match("A").ThenMaybeRepeat(Pattern.AnyOf("C", "D")).Then("B");
+            p2 = Pattern.Regex("A(C|D)*?B", RegexOptions.Legacy);
+            Check(p1, p2);
+#pragma warning restore 618
 
             p1 = Pattern.AnyOf(Pattern.Match("A").ThenMaybeRepeat("B"), Pattern.Match("C"));
             p2 = Pattern.Regex("AB*|C");

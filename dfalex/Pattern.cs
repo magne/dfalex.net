@@ -101,10 +101,11 @@ namespace CodeHive.DfaLex
         /// </list>
         /// </summary>
         /// <param name="regex">regular expression string to parse</param>
+        /// <param name="options"><see cref="RegexOptions"/> that modify the interpretation of <paramref name="regex"/></param>
         /// <returns>a pattern that implements the regular expression</returns>
-        public static Pattern Regex(string regex)
+        public static Pattern Regex(string regex, RegexOptions options = RegexOptions.None)
         {
-            return Match(RegexParser.Parse(regex));
+            return Match(RegexParser.Parse(regex, options));
         }
 
         /// <summary>
@@ -113,10 +114,11 @@ namespace CodeHive.DfaLex
         /// See <see cref="Regex"/> for syntax information.
         /// </summary>
         /// <param name="regex">regular expression string to parse</param>
+        /// <param name="options"><see cref="RegexOptions"/> that modify the interpretation of <paramref name="regex"/></param>
         /// <returns>a pattern that implements the regular expression</returns>
-        public static Pattern RegexI(string regex)
+        public static Pattern RegexI(string regex, RegexOptions options = RegexOptions.None)
         {
-            return Match(RegexParser.Parse(regex, RegexOptions.IgnoreCase));
+            return Match(RegexParser.Parse(regex, options | RegexOptions.IgnoreCase));
         }
 
         /// <summary>

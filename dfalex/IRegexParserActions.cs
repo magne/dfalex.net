@@ -18,16 +18,16 @@ namespace CodeHive.DfaLex
 {
     internal interface IRegexParserActions<T> where T : class
     {
-        T Empty();
+        T Empty(IRegexContext ctx);
 
-        T Literal(CharRange range);
+        T Literal(IRegexContext ctx, CharRange range);
 
-        T Alternate(T p1, T p2);
+        T Alternate(IRegexContext ctx, T p1, T p2);
 
-        T Catenate(T p1, T p2);
+        T Catenate(IRegexContext ctx, T p1, T p2);
 
-        T Repeat(T p, int min = -1, int max = -1, bool greedy = true);
+        T Repeat(IRegexContext ctx, T p, int min = -1, int max = -1, bool lazy = false);
 
-        T Group(T p, int no);
+        T Group(IRegexContext ctx, T p, int no);
     }
 }
