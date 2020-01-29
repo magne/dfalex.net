@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-using System;
-
 namespace CodeHive.DfaLex
 {
-    [Flags]
-    public enum RegexOptions
+    internal interface IRegexContext
     {
-        None       = 0x00000000,
-        IgnoreCase = 0x00000001, // "i"
+        bool Option(RegexOptions option);
 
-        [Obsolete("Will be removed in version 2.0.")]
-        Legacy     = 0x10000000
+        void ClrOption(RegexOptions option);
+
+        void SetOption(RegexOptions option);
     }
 }
