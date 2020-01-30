@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-using System;
-
 namespace CodeHive.DfaLex
 {
-    [Flags]
-    public enum RegexOptions
+    public enum NfaTransitionPriority
     {
-        None       = 0x00000000,
-        IgnoreCase = 0x00000001, // "i"
-
-        [Obsolete("Will be removed in version 2.0.")]
-        Legacy     = 0x10000000
+        Low,
+        Normal
     }
 }

@@ -43,7 +43,7 @@ namespace CodeHive.DfaLex
 
         public List<DfaStateInfo> States => dfaStates;
 
-        public List<(bool, TResult)> AcceptSets => acceptSets;
+        public List<(bool accept, TResult match)> AcceptSets => acceptSets;
 
         public int[] StartStates => startStates;
     }

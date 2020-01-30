@@ -30,9 +30,9 @@ namespace CodeHive.DfaLex
     public class Nfa<TResult>
     {
         private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
-        private readonly List<List<int>>           stateEpsilons    = new List<List<int>>();
-        private readonly List<TResult>             stateAccepts     = new List<TResult>();
-        private readonly List<bool>                stateAccepting   = new List<bool>();
+        private readonly List<List<NfaEpsilon>>    stateEpsilons    = new List<List<NfaEpsilon>>();
+
+        private readonly List<(bool accepting, TResult accepts)> stateAccepts = new List<(bool, TResult)>();
 
         /// <summary>
         /// Get the number of states in the NFA
@@ -63,13 +63,11 @@ namespace CodeHive.DfaLex
         private int AddState(TResult accept, bool accepting)
         {
             var state = stateAccepts.Count;
-            stateAccepts.Add(accept);
-            stateAccepting.Add(accepting);
+            stateAccepts.Add((accepting, accept));
             stateTransitions.Add(null);
             stateEpsilons.Add(null);
             Debug.Assert(stateAccepts.Count == stateTransitions.Count);
             Debug.Assert(stateAccepts.Count == stateEpsilons.Count);
-            Debug.Assert(stateAccepts.Count == stateAccepting.Count);
             return state;
         }
 
@@ -89,7 +87,7 @@ namespace CodeHive.DfaLex
                 stateTransitions[from] = list;
             }
 
-            list.Add(new NfaTransition(firstChar, lastChar, to));
+            list.Add(new NfaTransition(firstChar, lastChar, to, NfaTransitionPriority.Normal));
         }
 
         /// <summary>
@@ -97,16 +95,17 @@ namespace CodeHive.DfaLex
         /// </summary>
         /// <param name="from">The state to transition from</param>
         /// <param name="to">The state to transition to</param>
-        public void AddEpsilon(int from, int to)
+        /// <param name="priority">The priority of this transition</param>
+        public void AddEpsilon(int from, int to, NfaTransitionPriority priority = NfaTransitionPriority.Normal)
         {
             var list = stateEpsilons[from];
             if (list == null)
             {
-                list = new List<int>();
+                list = new List<NfaEpsilon>();
                 stateEpsilons[from] = list;
             }
 
-            list.Add(to);
+            list.Add(new NfaEpsilon(to, priority));
         }
 
         /// <summary>
@@ -116,7 +115,7 @@ namespace CodeHive.DfaLex
         /// <returns>True if the given state is accepting</returns>
         public bool IsAccepting(int state)
         {
-            return stateAccepting[state];
+            return stateAccepts[state].accepting;
         }
 
         /// <summary>
@@ -126,7 +125,7 @@ namespace CodeHive.DfaLex
         /// <returns>the result that was provided to <see cref="AddState()"/> when the state was created</returns>
         public TResult GetAccept(int state)
         {
-            return stateAccepts[state];
+            return stateAccepts[state].accepts;
         }
 
         /// <summary>
@@ -136,7 +135,7 @@ namespace CodeHive.DfaLex
         /// <returns>true if the state has any transitions or accepts</returns>
         public bool HasTransitionsOrAccepts(int state)
         {
-            return stateAccepting[state] || stateTransitions[state] != null;
+            return stateAccepts[state].accepting || stateTransitions[state] != null;
         }
 
         /// <summary>
@@ -144,10 +143,10 @@ namespace CodeHive.DfaLex
         /// </summary>
         /// <param name="state">the state number</param>
         /// <returns>An enumerable over all transitions out of the given state</returns>
-        public IEnumerable<int> GetStateEpsilons(int state)
+        public IEnumerable<NfaEpsilon> GetStateEpsilons(int state)
         {
             var list = stateEpsilons[state];
-            return list != null ? (IEnumerable<int>) list : new int[0];
+            return list != null ? (IEnumerable<NfaEpsilon>) list : new NfaEpsilon[0];
         }
 
         /// <summary>
@@ -182,11 +181,11 @@ namespace CodeHive.DfaLex
             for (var i = 0; i < reachable.Count; ++i)
             {
                 ForStateEpsilons(reachable[i],
-                                 num =>
+                                 trans =>
                                  {
-                                     if (checkSet.Add(num))
+                                     if (checkSet.Add(trans.State))
                                      {
-                                         reachable.Add(num);
+                                         reachable.Add(trans.State);
                                      }
                                  });
             }
@@ -211,19 +210,19 @@ namespace CodeHive.DfaLex
             foreach (var src in reachable)
             {
                 ForStateTransitions(src,
-                    trans =>
-                    {
-                        if (transSet.Add(trans))
-                        {
-                            AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
-                        }
-                    });
+                                    trans =>
+                                    {
+                                        if (transSet.Add(trans))
+                                        {
+                                            AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
+                                        }
+                                    });
             }
 
             return newState;
         }
 
-        internal void ForStateEpsilons(int state, Action<int> dest)
+        internal void ForStateEpsilons(int state, Action<NfaEpsilon> dest)
         {
             var list = stateEpsilons[state];
             list?.ForEach(dest);

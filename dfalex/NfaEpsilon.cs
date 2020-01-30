@@ -1,6 +1,5 @@
 /*
- * Copyright 2015 Matthew Timmermans
- * Copyright 2019 Magne Rasmussen
+ * Copyright 2020 Magne Rasmussen
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +17,10 @@
 namespace CodeHive.DfaLex
 {
     /// <summary>
-    /// A transition in a <see cref="Nfa{TResult}"/>
+    /// An epsilon transition in a <see cref="Nfa{TResult}"/>
     /// </summary>
-    public sealed class NfaTransition
+    public sealed class NfaEpsilon
     {
-        /// <summary>
-        /// The first character that triggers this transition.
-        /// </summary>
-        public char FirstChar { get; }
-
-        /// <summary>
-        /// The last character that triggers this transition.
-        /// </summary>
-        public char LastChar { get; }
-
         /// <summary>
         /// The target state of this transition.
         /// </summary>
@@ -45,14 +34,10 @@ namespace CodeHive.DfaLex
         /// <summary>
         /// Creates a new immutable NFA transtition.
         /// </summary>
-        /// <param name="firstChar">The first character that triggers this transition.</param>
-        /// <param name="lastChar">The last character that triggers this transition.</param>
         /// <param name="state">The target state of this transition.</param>
         /// <param name="priority">The priority of this transition.</param>
-        public NfaTransition(char firstChar, char lastChar, int state, NfaTransitionPriority priority)
+        public NfaEpsilon(int state, NfaTransitionPriority priority)
         {
-            FirstChar = firstChar;
-            LastChar = lastChar;
             State = state;
             Priority = priority;
         }
@@ -64,9 +49,9 @@ namespace CodeHive.DfaLex
                 return true;
             }
 
-            if (obj is NfaTransition t)
+            if (obj is NfaEpsilon t)
             {
-                return FirstChar == t.FirstChar && LastChar == t.LastChar && State == t.State && Priority == t.Priority;
+                return State == t.State && Priority == t.Priority;
             }
 
             return false;
@@ -75,8 +60,6 @@ namespace CodeHive.DfaLex
         public override int GetHashCode()
         {
             var hash = unchecked((int) 2166136261L);
-            hash = (hash ^ FirstChar) * 16777619;
-            hash = (hash ^ LastChar) * 16777619;
             hash = (hash ^ State) * 16777619;
             hash = (hash ^ (int) Priority) * 16777619;
             return hash ^ (hash >> 16);

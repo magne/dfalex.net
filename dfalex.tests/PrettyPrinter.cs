@@ -10,32 +10,48 @@ namespace CodeHive.DfaLex.Tests
     {
         public static string Print<T>(Nfa<T> nfa, int state, bool useStateNumbers = false)
         {
-            var ctx = new NfaContext<T>(nfa, useStateNumbers);
-            var printer = new CompactPrinter<int, T>(ctx, state);
+            var ctx = new NfaContext<T>(nfa, state, useStateNumbers);
+            var printer = new CompactPrinter<int, T>(ctx);
+
+            return printer.Print();
+        }
+
+        internal static string Print<T>(RawDfa<T> dfa, bool useStatefulNumbers = false)
+        {
+            var ctx = new RawDfaContext<T>(dfa, useStatefulNumbers);
+            var printer = new CompactPrinter<int, T>(ctx);
 
             return printer.Print();
         }
 
         public static string Print<T>(DfaState<T> state, bool useStateNumbers = false)
         {
-            var ctx = new DfaContext<T>(useStateNumbers);
-            var printer = new CompactPrinter<DfaState<T>, T>(ctx, state);
+            var ctx = new DfaContext<T>(state, useStateNumbers);
+            var printer = new CompactPrinter<DfaState<T>, T>(ctx);
 
             return printer.Print();
         }
 
         public static string PrintDot<T>(Nfa<T> nfa, int state, bool useStateNumbers = false)
         {
-            var ctx = new NfaContext<T>(nfa, useStateNumbers);
-            var printer = new DotPrinter<int, T>(ctx, state, "nfa");
+            var ctx = new NfaContext<T>(nfa, state, useStateNumbers);
+            var printer = new DotPrinter<int, T>(ctx, "nfa");
 
             return printer.Print();
         }
 
         public static string PrintDot<T>(DfaState<T> state, bool useStateNumbers = false)
         {
-            var ctx = new DfaContext<T>(useStateNumbers);
-            var printer = new DotPrinter<DfaState<T>, T>(ctx, state, "dfa");
+            var ctx = new DfaContext<T>(state, useStateNumbers);
+            var printer = new DotPrinter<DfaState<T>, T>(ctx, "dfa");
+
+            return printer.Print();
+        }
+
+        internal static string PrintDot<T>(RawDfa<T> rawDfa, bool useStateNumbers = false)
+        {
+            var ctx = new RawDfaContext<T>(rawDfa, useStateNumbers);
+            var printer = new DotPrinter<int, T>(ctx, "rawdfa");
 
             return printer.Print();
         }
@@ -71,14 +87,14 @@ namespace CodeHive.DfaLex.Tests
                     return "\\t";
 
                 default:
-                    return $"${((int) c):x}";
+                    return $"${(int) c:x}";
             }
         }
 
         private abstract class Context<TState, T>
         {
             private readonly IDictionary<TState, string> names     = new Dictionary<TState, string>();
-            public readonly  Queue<TState>               closureQ  = new Queue<TState>();
+            public readonly  Queue<TState>               ClosureQ  = new Queue<TState>();
             private readonly IDictionary<TState, string> transMemo = new Dictionary<TState, string>();
             private readonly bool                        useStateNumbers;
             private          int                         nextStateNum;
@@ -87,6 +103,8 @@ namespace CodeHive.DfaLex.Tests
             {
                 this.useStateNumbers = useStateNumbers;
             }
+
+            public IEnumerable<TState> StartStates { get; protected set; }
 
             public string StateName(TState state, bool appendMatch = true)
             {
@@ -103,7 +121,7 @@ namespace CodeHive.DfaLex.Tests
                     }
 
                     names.Add(state, ret);
-                    closureQ.Enqueue(state);
+                    ClosureQ.Enqueue(state);
                 }
 
                 return ret;
@@ -119,18 +137,21 @@ namespace CodeHive.DfaLex.Tests
 
             public abstract TState GetNextState(TState state, char ch);
 
-            public abstract void ForTransitions(TState state, Action empty, Action<TState> epsilon, Action<TState, char, char> transition);
+            public abstract void ForTransitions(TState state, Action empty, Action<TState, bool> epsilon, Action<TState, char, char, bool> transition);
 
             public string GetTransitionChars(TState state)
             {
                 if (!transMemo.TryGetValue(state, out var ret))
                 {
                     var buf = new StringBuilder();
-                    ForTransitions(state, null, null, (target, cMin, cMax) =>
-                    {
-                        buf.Append(cMin).Append(cMax);
-                        Debug.Assert(Equals(GetNextState(state, cMin), target));
-                    });
+                    ForTransitions(state,
+                        null,
+                        null,
+                        (target, cMin, cMax, lowPriority) =>
+                        {
+                            buf.Append(cMin).Append(cMax);
+                            Debug.Assert(Equals(GetNextState(state, cMin), target));
+                        });
                     ret = buf.ToString();
                     transMemo.Add(state, ret);
                 }
@@ -141,9 +162,11 @@ namespace CodeHive.DfaLex.Tests
 
         private class DfaContext<T> : Context<DfaState<T>, T>
         {
-            public DfaContext(bool useStateNumbers)
+            public DfaContext(DfaState<T> startState, bool useStateNumbers)
                 : base(useStateNumbers)
-            { }
+            {
+                StartStates = new[] {startState};
+            }
 
             protected override int GetStateNumber(DfaState<T> state) => state.StateNumber;
 
@@ -155,13 +178,63 @@ namespace CodeHive.DfaLex.Tests
 
             public override DfaState<T> GetNextState(DfaState<T> state, char ch) => state.GetNextState(ch);
 
-            public override void ForTransitions(DfaState<T> state, Action empty, Action<DfaState<T>> epsilon,
-                Action<DfaState<T>, char, char> transition)
+            public override void ForTransitions(DfaState<T> state,
+                Action empty,
+                Action<DfaState<T>, bool> epsilon,
+                Action<DfaState<T>, char, char, bool> transition)
             {
                 var isEmpty = true;
                 state.EnumerateTransitions((cMin, cMax, target) =>
                 {
-                    transition?.Invoke(target, cMin, cMax);
+                    transition?.Invoke(target, cMin, cMax, false);
+                    isEmpty = false;
+                });
+
+                if (empty != null && isEmpty)
+                {
+                    empty();
+                }
+            }
+        }
+
+        private class RawDfaContext<T> : Context<int, T>
+        {
+            private readonly RawDfa<T> dfa;
+
+            public RawDfaContext(RawDfa<T> dfa, bool useStateNumbers)
+                : base(useStateNumbers)
+            {
+                this.dfa = dfa;
+                StartStates = dfa.StartStates;
+            }
+
+            protected override int GetStateNumber(int state) => state;
+
+            public override bool HasIncomingEpsilon(int target) => false;
+
+            public override bool IsAccepting(int state) => dfa.AcceptSets[dfa.States[state].GetAcceptSetIndex()].accept;
+
+            public override T GetMatch(int state) => dfa.AcceptSets[dfa.States[state].GetAcceptSetIndex()].match;
+
+            public override int GetNextState(int state, char ch)
+            {
+                var nextState = -1;
+                dfa.States[state].ForEachTransition(trans =>
+                {
+                    if (trans.FirstChar <= ch && ch <= trans.LastChar)
+                    {
+                        nextState = trans.State;
+                    }
+                });
+                return nextState;
+            }
+
+            public override void ForTransitions(int state, Action empty, Action<int, bool> epsilon, Action<int, char, char, bool> transition)
+            {
+                var isEmpty = true;
+                dfa.States[state].ForEachTransition(trans =>
+                {
+                    transition?.Invoke(trans.State, trans.FirstChar, trans.LastChar, false);
                     isEmpty = false;
                 });
 
@@ -176,10 +249,11 @@ namespace CodeHive.DfaLex.Tests
         {
             private readonly Nfa<T> nfa;
 
-            public NfaContext(Nfa<T> nfa, bool useStateNumbers)
+            public NfaContext(Nfa<T> nfa, int startState, bool useStateNumbers)
                 : base(useStateNumbers)
             {
                 this.nfa = nfa;
+                StartStates = new[] {startState};
             }
 
             protected override int GetStateNumber(int state) => state;
@@ -188,7 +262,7 @@ namespace CodeHive.DfaLex.Tests
             {
                 for (var st = 0; st < nfa.NumStates; ++st)
                 {
-                    if (nfa.GetStateEpsilons(st).Contains(target))
+                    if (nfa.GetStateEpsilons(st).Any(trans => trans.State == target))
                     {
                         return true;
                     }
@@ -214,7 +288,7 @@ namespace CodeHive.DfaLex.Tests
                 throw new InvalidOperationException($"No transition from {StateName(state)} on '{ch}'");
             }
 
-            public override void ForTransitions(int state, Action empty, Action<int> epsilon, Action<int, char, char> transition)
+            public override void ForTransitions(int state, Action empty, Action<int, bool> epsilon, Action<int, char, char, bool> transition)
             {
                 if (!nfa.GetStateEpsilons(state).Any() && !nfa.GetStateTransitions(state).Any())
                 {
@@ -224,12 +298,12 @@ namespace CodeHive.DfaLex.Tests
                 {
                     if (epsilon != null)
                     {
-                        nfa.ForStateEpsilons(state, epsilon);
+                        nfa.ForStateEpsilons(state, trans => epsilon(trans.State, trans.Priority == NfaTransitionPriority.Low));
                     }
 
                     if (transition != null)
                     {
-                        nfa.ForStateTransitions(state, trans => transition(trans.State, trans.FirstChar, trans.LastChar));
+                        nfa.ForStateTransitions(state, trans => transition(trans.State, trans.FirstChar, trans.LastChar, trans.Priority == NfaTransitionPriority.Low));
                     }
                 }
             }
@@ -237,19 +311,25 @@ namespace CodeHive.DfaLex.Tests
 
         private abstract class Printer<TState, T>
         {
-            protected readonly Context<TState, T> Ctx;
-            protected readonly StringBuilder   Buf = new StringBuilder(4096);
+            private readonly Context<TState, T> ctx;
+            private readonly StringBuilder      buf = new StringBuilder(4096);
+            private readonly bool               appendMatch;
 
-            protected Printer(Context<TState, T> ctx)
+            protected Printer(Context<TState, T> ctx, bool appendMatch)
             {
-                Ctx = ctx;
+                this.ctx = ctx;
+                this.appendMatch = appendMatch;
             }
 
             public string Print()
             {
-                while (Ctx.closureQ.Any())
+                foreach (var startState in ctx.StartStates)
                 {
-                    PrintState(Ctx.closureQ.Dequeue());
+                    WriteStartState(startState);
+                    while (ctx.ClosureQ.Any())
+                    {
+                        PrintState(ctx.ClosureQ.Dequeue());
+                    }
                 }
 
                 return ToString();
@@ -259,79 +339,116 @@ namespace CodeHive.DfaLex.Tests
             {
                 WriteState(state);
 
-                Ctx.ForTransitions(state,
+                ctx.ForTransitions(state,
                     WriteEmpty,
-                    target => WriteEpsilon(state, target),
-                    (target, cMin, cMax) => WriteTransition(state, target, cMin, cMax));
+                    (target, lowPriority) => WriteEpsilon(state, target, lowPriority),
+                    (target, cMin, cMax, lowPriority) => WriteTransition(state, target, cMin, cMax, lowPriority));
             }
 
             public override string ToString()
             {
-                return Buf.ToString();
+                return buf.ToString();
             }
+
+            protected string StateName(TState state) => ctx.StateName(state, appendMatch);
+
+            protected abstract void WriteStartState(TState state);
 
             protected abstract void WriteState(TState state);
 
             protected virtual void WriteEmpty()
             { }
 
-            protected virtual void WriteEpsilon(TState state, TState target)
+            protected virtual void WriteEpsilon(TState state, TState target, bool lowPriority)
             { }
 
-            protected abstract void WriteTransition(TState state, TState target, char cMin, char cMax);
+            protected abstract void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority);
+
+            protected (bool, T) Accepting(TState state)
+            {
+                var accepts = ctx.IsAccepting(state);
+                return (accepts, accepts ? ctx.GetMatch(state) : default);
+            }
+
+            protected bool NextSingleTransitionState(TState state, ref TState target, out char cMin, out char cMax)
+            {
+                var nextTrans = ctx.GetTransitionChars(state);
+                if (nextTrans.Length == 2 && !ctx.HasIncomingEpsilon(state) && !ctx.IsAccepting(state))
+                {
+                    cMin = nextTrans[0];
+                    cMax = nextTrans[1];
+                    target = ctx.GetNextState(state, cMin);
+                    return true;
+                }
+
+                cMin = cMax = default;
+                return false;
+            }
+
+            protected Printer<TState, T> Append(char ch)
+            {
+                buf.Append(ch);
+                return this;
+            }
+
+            public void Append(string str)
+            {
+                buf.Append(str);
+            }
+
+            protected void AppendLine(string str)
+            {
+                buf.AppendLine(str);
+            }
         }
 
         private class CompactPrinter<TState, T> : Printer<TState, T>
         {
-            public CompactPrinter(Context<TState, T> ctx, TState startState)
-                : base(ctx)
+            public CompactPrinter(Context<TState, T> ctx)
+                : base(ctx, true)
+            { }
+
+            protected override void WriteStartState(TState state)
             {
-                ctx.StateName(startState);
+                StateName(state);
             }
 
             protected override void WriteState(TState state)
             {
-                var stateName = Ctx.StateName(state);
-                Buf.AppendLine(stateName);
+                var stateName = StateName(state);
+                AppendLine(stateName);
             }
 
             protected override void WriteEmpty()
             {
-                Buf.AppendLine("    (done)");
+                AppendLine("    (done)");
             }
 
-            protected override void WriteEpsilon(TState state, TState target)
+            protected override void WriteEpsilon(TState state, TState target, bool lowPriority)
             {
-                Buf.Append("    ε -> ").AppendLine(Ctx.StateName(target));
+                AppendLine($"   {(lowPriority ? "-" : " ")}ε -> {StateName(target)}");
             }
 
-            protected override void WriteTransition(TState state, TState target, char cMin, char cMax)
+            protected override void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority)
             {
-                var line = new StringBuilder();
-                line.Append("    ");
+                Append($"   {(lowPriority ? "-" : " ")}");
                 while (true)
                 {
-                    line.Append(PrintChar(cMin));
+                    Append(PrintChar(cMin));
                     if (cMin != cMax)
                     {
-                        line.Append('-').Append(PrintChar(cMax));
+                        Append('-').Append(PrintChar(cMax));
                     }
 
-                    line.Append(" -> ");
+                    Append(" -> ");
 
-                    var nextTrans = Ctx.GetTransitionChars(target);
-                    if (nextTrans.Length == 2 && !Ctx.HasIncomingEpsilon(target) && !Ctx.IsAccepting(target))
+                    if (NextSingleTransitionState(target, ref target, out cMin, out cMax))
                     {
-                        cMin = nextTrans[0];
-                        cMax = nextTrans[1];
-                        target = Ctx.GetNextState(target, cMin);
+                        continue;
                     }
-                    else
-                    {
-                        line.Append(Ctx.StateName(target));
-                        Buf.AppendLine(line.ToString());
-                        break;
-                    }
+
+                    AppendLine(StateName(target));
+                    break;
                 }
             }
         }
@@ -339,22 +456,17 @@ namespace CodeHive.DfaLex.Tests
         private class DotPrinter<TState, T> : Printer<TState, T>
         {
             private readonly string title;
-            private readonly TState startState;
 
-            public DotPrinter(Context<TState, T> ctx, TState startState, string title)
-                : base(ctx)
+            public DotPrinter(Context<TState, T> ctx, string title)
+                : base(ctx, false)
             {
-                ctx.StateName(startState, false);
                 this.title = title;
-                this.startState = startState;
             }
 
             private void Preamble(StringBuilder buf)
             {
                 buf.AppendLine($"digraph {title} {{");
                 buf.AppendLine("rankdir=LR;");
-                buf.AppendLine("n999999 [style=invis];"); // Invisible start node
-                buf.AppendLine($"n999999 -> {Ctx.StateName(startState)}"); // Edge into start state
             }
 
             private void Appendix(StringBuilder buf)
@@ -362,22 +474,30 @@ namespace CodeHive.DfaLex.Tests
                 buf.AppendLine("}");
             }
 
+            protected override void WriteStartState(TState state)
+            {
+                var stateName = $"{StateName(state)}_Start";
+                AppendLine($"{stateName} [style=invis];"); // Invisible start name
+                AppendLine($"{stateName} -> {StateName(state)}"); // Edge into start state
+            }
+
             protected override void WriteState(TState state)
             {
-                var stateName = Ctx.StateName(state);
-                if (Ctx.IsAccepting(state))
+                var (accepts, match) = Accepting(state);
+                if (accepts)
                 {
                     // Accept states are double circles
-                    Buf.AppendLine($"{stateName}[label=\"{stateName}\n{Ctx.GetMatch(state)}\",peripheries=2]");
+                    var stateName = StateName(state);
+                    AppendLine($"{stateName}[label=\"{stateName}\n{match}\",peripheries=2]");
                 }
             }
 
-            protected override void WriteEpsilon(TState state, TState target)
+            protected override void WriteEpsilon(TState state, TState target, bool lowPriority)
             {
-                Buf.AppendLine($"{Ctx.StateName(state, false)} -> {Ctx.StateName(target, false)} [label=\"ε\"]");
+                AppendLine($"{StateName(state)} -> {StateName(target)} [label=\"{(lowPriority ? "-" : string.Empty)}ε\"]");
             }
 
-            protected override void WriteTransition(TState state, TState target, char cMin, char cMax)
+            protected override void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority)
             {
                 var label = new StringBuilder();
                 label.Append(PrintChar(cMin, true));
@@ -386,14 +506,14 @@ namespace CodeHive.DfaLex.Tests
                     label.Append('-').Append(PrintChar(cMax, true));
                 }
 
-                Buf.AppendLine($"{Ctx.StateName(state)} -> {Ctx.StateName(target, false)} [label=\"{label}\"]");
+                AppendLine($"{StateName(state)} -> {StateName(target)} [label=\"{(lowPriority ? "-" : string.Empty)}{label}\"]");
             }
 
             public override string ToString()
             {
-                var sb = new StringBuilder(Buf.Length + 1024);
+                var sb = new StringBuilder(8192);
                 Preamble(sb);
-                sb.Append(Buf);
+                sb.Append(base.ToString());
                 Appendix(sb);
                 return sb.ToString();
             }
