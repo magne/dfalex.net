@@ -32,12 +32,12 @@ namespace CodeHive.DfaLex
         ///
         /// NO NEW TRANSITIONS will be added to the target state or any other pre-existing states.
         /// </summary>
-        /// <param name="nfa">NFA to add to.</param>
+        /// <param name="nfa">NFA builder to add to.</param>
         /// <param name="targetState">target state after the pattern is matched</param>
-        /// <typeparam name="TResult">The type of result produced by matching a pattern.</typeparam>
+        /// <typeparam name="TState">The type of the NFA states.</typeparam>
         /// <returns>a state that transitions to <paramref name="targetState"/> after matching the pattern, and only after
         /// matching the pattern. This may be <paramref name="targetState"/> if the pattern is an empty string.</returns>
-        int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState);
+        TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState);
 
         /// <returns><c>true</c> if this pattern matches the empty string</returns>
         bool MatchesEmpty { get; }

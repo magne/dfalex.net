@@ -44,7 +44,7 @@ namespace CodeHive.DfaLex.Tests
 
             var lang = new HashSet<JavaToken>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken>());
             var start = builder.Build(lang, null);
-            CheckDfa(start, "JavaTest.out.txt", false);
+            CheckDfa(start, "JavaTest.out.txt");
         }
 
         private class InMemoryBuilderCache : IBuilderCache

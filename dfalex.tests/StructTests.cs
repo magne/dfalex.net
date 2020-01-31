@@ -23,7 +23,7 @@ namespace CodeHive.DfaLex.Tests
             builder.AddPattern(Pattern.Regex("([A-Za-z])([A-Za-z0-9])*"), EnumToken.Id);
             var start = builder.Build(accepts => accepts.First());
 
-            CheckDfa(start, "StructTests-1.txt", false);
+            CheckDfa(start, "StructTests-1.txt");
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace CodeHive.DfaLex.Tests
             builder.AddPattern(Pattern.Regex("bb"), 1);
             var start = builder.Build(null);
 
-            CheckDfa(start, "StructTests-2.txt", false);
+            CheckDfa(start, "StructTests-2.txt");
         }
     }
 }

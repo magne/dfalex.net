@@ -30,7 +30,7 @@ namespace CodeHive.DfaLex.Tests
             builder.AddPattern(by3, true);
             var start = builder.Build(new HashSet<bool> { true }, null);
             Assert.Equal(3, CountStates(start));
-            CheckDfa(start, "By3Test.out.txt", false);
+            CheckDfa(start, "By3Test.out.txt");
         }
     }
 }

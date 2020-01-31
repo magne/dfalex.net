@@ -12,23 +12,23 @@ namespace CodeHive.DfaLex.Tests
         [Fact]
         public void TestIt()
         {
-            CheckDfa(Pattern.Regex("(a*b|d)+c?c?c?"), "");
+            CheckDfa(Pattern.Regex("(a*b|d)+c?c?c?"), "It");
         }
 
         private void CheckDfa(IMatchable regex, string resourceSection)
         {
-            var nfa = new Nfa<int>();
+            var nfa = Nfa<int>.GetBuilder();
             var startStates = new[] {AddToNfa(nfa, regex, 1), AddToNfa(nfa, Pattern.Regex("a*(b|c)d+"), 2)};
 
-            var rawDfa = new DfaFromNfa<int>(nfa, startStates, null).GetDfa();
+            var rawDfa = new DfaFromNfa<int>(nfa.Build(), startStates, null).GetDfa();
             var minimalDfa = new DfaMinimizer<int>(rawDfa).GetMinimizedDfa();
-            PrintDot(minimalDfa);
-            // serializableDfa = new SerializableDfa<TResult>(minimalDfa);
+            // PrintDot(minimalDfa);
+            var dfa = new SerializableDfa<int>(minimalDfa);
 
-//            CheckNfa(nfa, state, $"NfaTests.out.txt#{resourceSection}", true);
+            CheckDfa(dfa.GetStartStates()[0], $"DfaTests.out.txt#{resourceSection}");
         }
 
-        private int AddToNfa<T>(Nfa<T> nfa, IMatchable pattern, T match)
+        private static int AddToNfa<T>(Nfa<T>.Builder nfa, IMatchable pattern, T match)
         {
             var start = nfa.AddState();
             var accept = nfa.AddState(match);

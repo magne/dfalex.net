@@ -387,7 +387,7 @@ namespace CodeHive.DfaLex
 
         private SerializableDfa<TResult> _build(IList<ISet<TResult>> languages, DfaAmbiguityResolver<TResult> ambiguityResolver)
         {
-            var nfa = new Nfa<TResult>();
+            var nfa = Nfa<TResult>.GetBuilder();
 
             var nfaStartStates = new int[languages.Count];
             for (var i = 0; i < languages.Count; ++i)
@@ -437,7 +437,7 @@ namespace CodeHive.DfaLex
                 }
             }
 
-            var rawDfa = new DfaFromNfa<TResult>(nfa, nfaStartStates, ambiguityResolver).GetDfa();
+            var rawDfa = new DfaFromNfa<TResult>(nfa.Build(), nfaStartStates, ambiguityResolver).GetDfa();
             var minimalDfa = new DfaMinimizer<TResult>(rawDfa).GetMinimizedDfa();
             var serializableDfa = new SerializableDfa<TResult>(minimalDfa);
             return serializableDfa;
@@ -445,7 +445,7 @@ namespace CodeHive.DfaLex
 
         private SerializableDfa<bool> _buildReverseFinders(IList<ISet<TResult>> languages)
         {
-            var nfa = new Nfa<bool>();
+            var nfa = Nfa<bool>.GetBuilder();
 
             var startState = nfa.AddState();
             var endState = nfa.AddState(true);
@@ -482,7 +482,7 @@ namespace CodeHive.DfaLex
             startState = Pattern.MaybeRepeat(CharRange.All).AddToNfa(nfa, startState);
 
             //build the DFA
-            var rawDfa = new DfaFromNfa<bool>(nfa, new[] { startState }, ambiguityResolver).GetDfa();
+            var rawDfa = new DfaFromNfa<bool>(nfa.Build(), new[] { startState }, ambiguityResolver).GetDfa();
             var minimalDfa = new DfaMinimizer<bool>(rawDfa).GetMinimizedDfa();
             var serializableDfa = new SerializableDfa<bool>(minimalDfa);
             return serializableDfa;

@@ -55,26 +55,26 @@ namespace CodeHive.DfaLex.Tests
         {
             var regex = Pattern.Regex("(((a+)b)+c)+");
 
-            var nfa = new Nfa<int>();
+            var nfa = Nfa<int>.GetBuilder();
             var start = nfa.AddState();
             var accept = nfa.AddState(1);
 
             var state = regex.AddToNfa(nfa, accept);
             nfa.AddEpsilon(start, state);
 
-            PrintDot(nfa, start);
+            PrintDot(nfa.Build(), start);
         }
 
         private void CheckNfa(IMatchable regex, string resourceSection)
         {
-            var nfa = new Nfa<int>();
+            var nfa = Nfa<int>.GetBuilder();
             var start = nfa.AddState();
             var accept = nfa.AddState(1);
 
             var state = regex.AddToNfa(nfa, accept);
             nfa.AddEpsilon(start, state);
 
-            CheckNfa(nfa, state, $"NfaTests.out.txt#{resourceSection}");
+            CheckNfa(nfa.Build(), state, $"NfaTests.out.txt#{resourceSection}");
         }
     }
 }

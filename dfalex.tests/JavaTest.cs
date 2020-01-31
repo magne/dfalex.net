@@ -23,7 +23,7 @@ namespace CodeHive.DfaLex.Tests
 
             var start = builder.Build(new HashSet<JavaToken>(Enum.GetValues(typeof(JavaToken)).Cast<JavaToken>()), null);
 
-            CheckDfa(start, "JavaTest.out.txt", false);
+            CheckDfa(start, "JavaTest.out.txt");
         }
     }
 }

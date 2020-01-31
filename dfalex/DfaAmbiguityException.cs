@@ -64,7 +64,7 @@ namespace CodeHive.DfaLex
 
         private class Initializer
         {
-            internal readonly string       Message;
+            internal readonly string        Message;
             internal readonly List<TResult> Results;
 
             internal Initializer(string message, IEnumerable<TResult> results)

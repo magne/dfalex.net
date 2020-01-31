@@ -621,7 +621,7 @@ namespace CodeHive.DfaLex
             return Then(Group(pattern));
         }
 
-        public abstract int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState);
+        public abstract TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState);
 
         public abstract bool MatchesEmpty { get; }
 
@@ -664,7 +664,7 @@ namespace CodeHive.DfaLex
                 MatchesEmpty = first.MatchesEmpty && then.MatchesEmpty;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 targetState = then.AddToNfa(nfa, targetState);
                 targetState = first.AddToNfa(nfa, targetState);
@@ -695,7 +695,7 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 return tomatch.AddToNfa(nfa, targetState);
             }
@@ -724,7 +724,7 @@ namespace CodeHive.DfaLex
         [Serializable]
         private class EmptyPattern : Pattern
         {
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 return targetState;
             }
@@ -758,7 +758,7 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 for (var i = tomatch.Length - 1; i >= 0; --i)
                 {
@@ -800,7 +800,7 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 for (var i = tomatch.Length - 1; i >= 0; --i)
                 {
@@ -857,7 +857,7 @@ namespace CodeHive.DfaLex
                 this.lazy = lazy;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 var repState = nfa.AddState();
                 nfa.AddEpsilon(repState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low);
@@ -908,7 +908,7 @@ namespace CodeHive.DfaLex
                 this.lazy = lazy;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 var startState = pattern.AddToNfa(nfa, targetState);
                 if (pattern.MatchesEmpty)
@@ -953,7 +953,7 @@ namespace CodeHive.DfaLex
                 this.pattern = pattern;
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 // TODO create capture group
 
@@ -1009,7 +1009,7 @@ namespace CodeHive.DfaLex
                 Array.Copy(choices, this.choices, choices.Length);
             }
 
-            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState)
             {
                 if (choices.Length == 0)
                 {

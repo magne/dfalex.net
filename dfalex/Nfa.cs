@@ -29,84 +29,189 @@ namespace CodeHive.DfaLex
     /// <typeparam name="TResult">The type of result produced by matching a pattern.</typeparam>
     public class Nfa<TResult>
     {
-        private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
-        private readonly List<List<NfaEpsilon>>    stateEpsilons    = new List<List<NfaEpsilon>>();
+        public class Builder : INfaBuilder<int>
+        {
+            private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
+            private readonly List<List<NfaEpsilon>>    stateEpsilons    = new List<List<NfaEpsilon>>();
 
-        private readonly List<(bool accepting, TResult accepts)> stateAccepts = new List<(bool, TResult)>();
+            private readonly List<(bool accepting, TResult accepts)> stateAccepts = new List<(bool, TResult)>();
+
+            /// <summary>
+            /// Add a new state to the NFA.
+            /// </summary>
+            /// <returns>the number of the new state</returns>
+            public int AddState()
+            {
+                return AddState(default, false);
+            }
+
+            /// <summary>
+            /// Add a new accepting state to the NFA.
+            /// </summary>
+            /// <param name="accept">Add a new state to the NFA</param>
+            /// <returns>the number of the new state</returns>
+            public int AddState(TResult accept)
+            {
+                return AddState(accept, true);
+            }
+
+            private int AddState(TResult accept, bool accepting)
+            {
+                var state = stateAccepts.Count;
+                stateAccepts.Add((accepting, accept));
+                stateTransitions.Add(null);
+                stateEpsilons.Add(null);
+                Debug.Assert(stateAccepts.Count == stateTransitions.Count);
+                Debug.Assert(stateAccepts.Count == stateEpsilons.Count);
+                return state;
+            }
+
+            /// <summary>
+            /// Add a transition to the NFA.
+            /// </summary>
+            /// <param name="from">The state to transition from</param>
+            /// <param name="to">The state to transition to</param>
+            /// <param name="firstChar">The first character in the accepted range</param>
+            /// <param name="lastChar">The last character in the accepted range</param>
+            public void AddTransition(int from, int to, char firstChar, char lastChar)
+            {
+                var list = stateTransitions[from];
+                if (list == null)
+                {
+                    list = new List<NfaTransition>();
+                    stateTransitions[from] = list;
+                }
+
+                list.Add(new NfaTransition(firstChar, lastChar, to, NfaTransitionPriority.Normal));
+            }
+
+            /// <summary>
+            /// Add an epsilon transition to the NFA.
+            /// </summary>
+            /// <param name="from">The state to transition from</param>
+            /// <param name="to">The state to transition to</param>
+            /// <param name="priority">The priority of this transition</param>
+            public void AddEpsilon(int from, int to, NfaTransitionPriority priority = NfaTransitionPriority.Normal)
+            {
+                var list = stateEpsilons[from];
+                if (list == null)
+                {
+                    list = new List<NfaEpsilon>();
+                    stateEpsilons[from] = list;
+                }
+
+                list.Add(new NfaEpsilon(to, priority));
+            }
+
+
+            /// <summary>
+            /// Make modified state, if necessary, that doesn't match the empty string.
+            ///
+            /// If <tt>state</tt> has a non-null result attached, or can reach such a state through epsilon transitions,
+            /// then a DFA made from that state would match the empty string.  In that case a new NFA state will be created
+            /// that matches all the same strings <i>except</i> the empty string.
+            /// </summary>
+            /// <param name="state">the number of the state to disemptify</param>
+            /// <returns>If <tt>state</tt> matches the empty string, then a new state that does not match the empty string
+            /// is returned.  Otherwise <tt>state</tt> is returned.</returns>
+            public int Disemptify(int state)
+            {
+                var reachable = new List<int>();
+
+                //first find all epsilon-reachable states
+                var checkSet = new HashSet<int>();
+                reachable.Add(state);
+                checkSet.Add(reachable[0]); //same Integer instance
+                for (var i = 0; i < reachable.Count; ++i)
+                {
+                    ForStateEpsilons(reachable[i],
+                        trans =>
+                        {
+                            if (checkSet.Add(trans.State))
+                            {
+                                reachable.Add(trans.State);
+                            }
+                        });
+                }
+
+                //if none of them accept, then we're done
+                for (var i = 0;; ++i)
+                {
+                    if (i >= reachable.Count)
+                    {
+                        return state;
+                    }
+
+                    if (IsAccepting(reachable[i]))
+                    {
+                        break;
+                    }
+                }
+
+                //need to make a new disemptified state.  first get all transitions
+                var newState = AddState();
+                var transSet = new HashSet<NfaTransition>();
+                foreach (var src in reachable)
+                {
+                    ForStateTransitions(src,
+                        trans =>
+                        {
+                            if (transSet.Add(trans))
+                            {
+                                AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
+                            }
+                        });
+                }
+
+                return newState;
+            }
+
+            public Nfa<TResult> Build()
+            {
+                return new Nfa<TResult>(stateTransitions, stateEpsilons, stateAccepts);
+            }
+
+            private bool IsAccepting(int state)
+            {
+                return stateAccepts[state].accepting;
+            }
+
+            private void ForStateEpsilons(int state, Action<NfaEpsilon> dest)
+            {
+                var list = stateEpsilons[state];
+                list?.ForEach(dest);
+            }
+
+            private void ForStateTransitions(int state, Action<NfaTransition> dest)
+            {
+                var list = stateTransitions[state];
+                list?.ForEach(dest);
+            }
+        }
+
+        public static Builder GetBuilder()
+        {
+            return new Builder();
+        }
+
+        private readonly List<List<NfaTransition>> stateTransitions;
+        private readonly List<List<NfaEpsilon>>    stateEpsilons;
+
+        private readonly List<(bool accepting, TResult accepts)> stateAccepts;
+
+        private Nfa(List<List<NfaTransition>> stateTransitions, List<List<NfaEpsilon>> stateEpsilons, List<(bool accepting, TResult accepts)> stateAccepts)
+        {
+            this.stateTransitions = stateTransitions;
+            this.stateEpsilons = stateEpsilons;
+            this.stateAccepts = stateAccepts;
+        }
 
         /// <summary>
         /// Get the number of states in the NFA
         /// </summary>
-        /// <returns>the total number of states that have been added with <see cref="AddState()"/> and
-        /// <see cref="AddState(TResult)"/>.</returns>
+        /// <returns>the total number of states that have been added with <see cref="CodeHive.DfaLex.Nfa{TResult}.Builder.AddState()"/> and
+        /// <see cref="CodeHive.DfaLex.Nfa{TResult}.Builder.AddState()"/>.</returns>
         public int NumStates => stateAccepts.Count;
-
-        /// <summary>
-        /// Add a new state to the NFA.
-        /// </summary>
-        /// <returns>the number of the new state</returns>
-        public int AddState()
-        {
-            return AddState(default, false);
-        }
-
-        /// <summary>
-        /// Add a new accepting state to the NFA.
-        /// </summary>
-        /// <param name="accept">Add a new state to the NFA</param>
-        /// <returns>the number of the new state</returns>
-        public int AddState(TResult accept)
-        {
-            return AddState(accept, true);
-        }
-
-        private int AddState(TResult accept, bool accepting)
-        {
-            var state = stateAccepts.Count;
-            stateAccepts.Add((accepting, accept));
-            stateTransitions.Add(null);
-            stateEpsilons.Add(null);
-            Debug.Assert(stateAccepts.Count == stateTransitions.Count);
-            Debug.Assert(stateAccepts.Count == stateEpsilons.Count);
-            return state;
-        }
-
-        /// <summary>
-        /// Add a transition to the NFA.
-        /// </summary>
-        /// <param name="from">The state to transition from</param>
-        /// <param name="to">The state to transition to</param>
-        /// <param name="firstChar">The first character in the accepted range</param>
-        /// <param name="lastChar">The last character in the accepted range</param>
-        public void AddTransition(int from, int to, char firstChar, char lastChar)
-        {
-            var list = stateTransitions[from];
-            if (list == null)
-            {
-                list = new List<NfaTransition>();
-                stateTransitions[from] = list;
-            }
-
-            list.Add(new NfaTransition(firstChar, lastChar, to, NfaTransitionPriority.Normal));
-        }
-
-        /// <summary>
-        /// Add an epsilon transition to the NFA.
-        /// </summary>
-        /// <param name="from">The state to transition from</param>
-        /// <param name="to">The state to transition to</param>
-        /// <param name="priority">The priority of this transition</param>
-        public void AddEpsilon(int from, int to, NfaTransitionPriority priority = NfaTransitionPriority.Normal)
-        {
-            var list = stateEpsilons[from];
-            if (list == null)
-            {
-                list = new List<NfaEpsilon>();
-                stateEpsilons[from] = list;
-            }
-
-            list.Add(new NfaEpsilon(to, priority));
-        }
 
         /// <summary>
         /// Is the given state an accepting state?
@@ -122,7 +227,7 @@ namespace CodeHive.DfaLex
         /// Get the result attached to the given state
         /// </summary>
         /// <param name="state">the state number</param>
-        /// <returns>the result that was provided to <see cref="AddState()"/> when the state was created</returns>
+        /// <returns>the result that was provided to <see cref="INfaBuilder{TResult}.AddState()"/> when the state was created</returns>
         public TResult GetAccept(int state)
         {
             return stateAccepts[state].accepts;
@@ -160,68 +265,6 @@ namespace CodeHive.DfaLex
             return list != null ? (IEnumerable<NfaTransition>) list : new NfaTransition[0];
         }
 
-        /// <summary>
-        /// Make modified state, if necessary, that doesn't match the empty string.
-        ///
-        /// If <tt>state</tt> has a non-null result attached, or can reach such a state through epsilon transitions,
-        /// then a DFA made from that state would match the empty string.  In that case a new NFA state will be created
-        /// that matches all the same strings <i>except</i> the empty string.
-        /// </summary>
-        /// <param name="state">the number of the state to disemptify</param>
-        /// <returns>If <tt>state</tt> matches the empty string, then a new state that does not match the empty string
-        /// is returned.  Otherwise <tt>state</tt> is returned.</returns>
-        public int Disemptify(int state)
-        {
-            var reachable = new List<int>();
-
-            //first find all epsilon-reachable states
-            var checkSet = new HashSet<int>();
-            reachable.Add(state);
-            checkSet.Add(reachable[0]); //same Integer instance
-            for (var i = 0; i < reachable.Count; ++i)
-            {
-                ForStateEpsilons(reachable[i],
-                                 trans =>
-                                 {
-                                     if (checkSet.Add(trans.State))
-                                     {
-                                         reachable.Add(trans.State);
-                                     }
-                                 });
-            }
-
-            //if none of them accept, then we're done
-            for (var i = 0;; ++i)
-            {
-                if (i >= reachable.Count)
-                {
-                    return state;
-                }
-
-                if (IsAccepting(reachable[i]))
-                {
-                    break;
-                }
-            }
-
-            //need to make a new disemptified state.  first get all transitions
-            var newState = AddState();
-            ISet<NfaTransition> transSet = new HashSet<NfaTransition>();
-            foreach (var src in reachable)
-            {
-                ForStateTransitions(src,
-                                    trans =>
-                                    {
-                                        if (transSet.Add(trans))
-                                        {
-                                            AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
-                                        }
-                                    });
-            }
-
-            return newState;
-        }
-
         internal void ForStateEpsilons(int state, Action<NfaEpsilon> dest)
         {
             var list = stateEpsilons[state];
@@ -233,5 +276,12 @@ namespace CodeHive.DfaLex
             var list = stateTransitions[state];
             list?.ForEach(dest);
         }
+    }
+
+    public interface INfaBuilder<TState>
+    {
+        TState AddState();
+        void AddTransition(TState from, TState to, char firstChar, char lastChar);
+        void AddEpsilon(TState from, TState to, NfaTransitionPriority priority = NfaTransitionPriority.Normal);
     }
 }

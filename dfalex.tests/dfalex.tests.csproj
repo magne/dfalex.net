@@ -36,6 +36,8 @@
     <EmbeddedResource Include="StructTests-2.txt" />
     <None Remove="NfaTests.out.txt" />
     <EmbeddedResource Include="NfaTests.out.txt" />
+    <None Remove="DfaTests.out.txt" />
+    <EmbeddedResource Include="DfaTests.out.txt" />
   </ItemGroup>
 
 </Project>

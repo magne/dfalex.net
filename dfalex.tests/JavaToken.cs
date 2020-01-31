@@ -147,15 +147,15 @@ namespace CodeHive.DfaLex.Tests
 
         private static readonly Pattern Exponent = AnyCharIn("eE").Then(AnyCharIn("+-")).ThenRepeat(CharRange.Digits);
 
-        private static IDictionary<JavaToken, Pattern> _patterns;
+        private static IDictionary<JavaToken, Pattern> patterns;
 
-        private static bool _initialized;
+        private static bool initialized;
 
         private static readonly object LockObject = new object();
 
         private static void Initialize()
         {
-            _patterns = new Dictionary<JavaToken, Pattern>
+            patterns = new Dictionary<JavaToken, Pattern>
             {
                 /* keywords */
                 { JavaToken.ABSTRACT, Match("abstract") },
@@ -305,19 +305,19 @@ namespace CodeHive.DfaLex.Tests
 
         public static Pattern Pattern(this JavaToken token)
         {
-            if (!_initialized)
+            if (!initialized)
             {
                 lock (LockObject)
                 {
-                    if (!_initialized)
+                    if (!initialized)
                     {
                         Initialize();
-                        _initialized = true;
+                        initialized = true;
                     }
                 }
             }
 
-            if (_patterns.TryGetValue(token, out var pattern))
+            if (patterns.TryGetValue(token, out var pattern))
             {
                 return pattern;
             }
