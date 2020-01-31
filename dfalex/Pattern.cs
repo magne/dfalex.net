@@ -302,6 +302,16 @@ namespace CodeHive.DfaLex
         }
 
         /// <summary>
+        /// Create a pattern that creates a capture group for a given pattern.
+        /// </summary>
+        /// <param name="pattern">given pattern</param>
+        /// <returns>the new pattern</returns>
+        public static Pattern Group(IMatchable pattern)
+        {
+            return new GroupPattern(pattern);
+        }
+
+        /// <summary>
         /// Create a pattern that matches any of the given patterns.
         /// </summary>
         /// <param name="patterns">patterns to accept</param>
@@ -601,6 +611,16 @@ namespace CodeHive.DfaLex
             return Then(MaybeRepeatLazyI(str));
         }
 
+        /// <summary>
+        /// Create a pattern that creates a capture group for a given pattern.
+        /// </summary>
+        /// <param name="pattern">given pattern</param>
+        /// <returns>the new pattern</returns>
+        public Pattern ThenGroup(IMatchable pattern)
+        {
+            return Then(Group(pattern));
+        }
+
         public abstract int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState);
 
         public abstract bool MatchesEmpty { get; }
@@ -849,9 +869,9 @@ namespace CodeHive.DfaLex
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(repState, skipState);
+                nfa.AddEpsilon(repState,  skipState);
                 nfa.AddEpsilon(skipState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low);
-                nfa.AddEpsilon(skipState, startState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal);
+                nfa.AddEpsilon(skipState, startState,  lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal);
                 return skipState;
             }
 
@@ -920,6 +940,49 @@ namespace CodeHive.DfaLex
                 }
 
                 return new OptionalPattern(revpat, lazy);
+            }
+        }
+
+        [Serializable]
+        private class GroupPattern : Pattern
+        {
+            private readonly IMatchable pattern;
+
+            public GroupPattern(IMatchable pattern)
+            {
+                this.pattern = pattern;
+            }
+
+            public override int AddToNfa<TResult>(Nfa<TResult> nfa, int targetState)
+            {
+                // TODO create capture group
+
+                var startState = nfa.AddState();
+                var endState = nfa.AddState();
+                var patternState = pattern.AddToNfa(nfa, endState);
+
+                // TODO add capture group tag
+                nfa.AddEpsilon(startState, patternState);
+                nfa.AddEpsilon(endState, targetState);
+
+                return startState;
+            }
+
+            public override bool MatchesEmpty => pattern.MatchesEmpty;
+            public override bool MatchesNonEmpty => pattern.MatchesNonEmpty;
+            public override bool MatchesSomething => pattern.MatchesSomething;
+            public override bool IsUnbounded => pattern.IsUnbounded;
+
+            protected override Pattern CalcReverse()
+            {
+                var revpat = pattern.Reversed;
+                // ReSharper disable once PossibleUnintendedReferenceComparison
+                if (revpat == pattern)
+                {
+                    return this;
+                }
+
+                return new GroupPattern(revpat);
             }
         }
 

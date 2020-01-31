@@ -127,7 +127,7 @@ namespace CodeHive.DfaLex
                 }
             }
 
-            public IMatchable Group(IRegexContext ctx, IMatchable p, int no) => p;
+            public IMatchable Group(IRegexContext ctx, IMatchable p, int no) => Pattern.Group(p);
         }
     }
 

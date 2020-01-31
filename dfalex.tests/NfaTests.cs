@@ -50,6 +50,21 @@ namespace CodeHive.DfaLex.Tests
             CheckNfa(t.Data.matchable.Reversed, section);
         }
 
+        [Fact]
+        public void TestGroupMatch()
+        {
+            var regex = Pattern.Regex("(((a+)b)+c)+");
+
+            var nfa = new Nfa<int>();
+            var start = nfa.AddState();
+            var accept = nfa.AddState(1);
+
+            var state = regex.AddToNfa(nfa, accept);
+            nfa.AddEpsilon(start, state);
+
+            PrintDot(nfa, start);
+        }
+
         private void CheckNfa(IMatchable regex, string resourceSection)
         {
             var nfa = new Nfa<int>();
