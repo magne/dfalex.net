@@ -31,8 +31,10 @@ namespace CodeHive.DfaLex
     {
         public class Builder : INfaBuilder<int>
         {
-            private readonly List<List<NfaTransition>> stateTransitions = new List<List<NfaTransition>>();
-            private readonly List<List<NfaEpsilon>>    stateEpsilons    = new List<List<NfaEpsilon>>();
+            private readonly CaptureGroup.Maker        captureGroupMaker = new CaptureGroup.Maker();
+            private readonly List<List<NfaTransition>> stateTransitions  = new List<List<NfaTransition>>();
+            private readonly List<List<NfaEpsilon>>    stateEpsilons     = new List<List<NfaEpsilon>>();
+            private readonly IList<Tag>                tags              = new List<Tag>();
 
             private readonly List<(bool accepting, TResult accepts)> stateAccepts = new List<(bool, TResult)>();
 
@@ -91,7 +93,8 @@ namespace CodeHive.DfaLex
             /// <param name="from">The state to transition from</param>
             /// <param name="to">The state to transition to</param>
             /// <param name="priority">The priority of this transition</param>
-            public void AddEpsilon(int from, int to, NfaTransitionPriority priority = NfaTransitionPriority.Normal)
+            /// <param name="tag">The tag of this transition</param>
+            public void AddEpsilon(int from, int to, NfaTransitionPriority priority, Tag tag)
             {
                 var list = stateEpsilons[from];
                 if (list == null)
@@ -125,13 +128,13 @@ namespace CodeHive.DfaLex
                 for (var i = 0; i < reachable.Count; ++i)
                 {
                     ForStateEpsilons(reachable[i],
-                        trans =>
-                        {
-                            if (checkSet.Add(trans.State))
-                            {
-                                reachable.Add(trans.State);
-                            }
-                        });
+                                     trans =>
+                                     {
+                                         if (checkSet.Add(trans.State))
+                                         {
+                                             reachable.Add(trans.State);
+                                         }
+                                     });
                 }
 
                 //if none of them accept, then we're done
@@ -154,16 +157,30 @@ namespace CodeHive.DfaLex
                 foreach (var src in reachable)
                 {
                     ForStateTransitions(src,
-                        trans =>
-                        {
-                            if (transSet.Add(trans))
-                            {
-                                AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
-                            }
-                        });
+                                        trans =>
+                                        {
+                                            if (transSet.Add(trans))
+                                            {
+                                                AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
+                                            }
+                                        });
                 }
 
                 return newState;
+            }
+
+            public CaptureGroup MakeCaptureGroup(CaptureGroup parent)
+            {
+                var cg = captureGroupMaker.Next(parent);
+                RegisterCaptureGroup(cg);
+                return cg;
+            }
+
+            public void RegisterCaptureGroup(CaptureGroup cg)
+            {
+                Debug.Assert(tags.Count / 2 == cg.Number);
+                tags.Add(cg.StartTag);
+                tags.Add(cg.EndTag);
             }
 
             public Nfa<TResult> Build()
@@ -282,6 +299,7 @@ namespace CodeHive.DfaLex
     {
         TState AddState();
         void AddTransition(TState from, TState to, char firstChar, char lastChar);
-        void AddEpsilon(TState from, TState to, NfaTransitionPriority priority = NfaTransitionPriority.Normal);
+        void AddEpsilon(TState from, TState to, NfaTransitionPriority priority, Tag tag);
+        CaptureGroup MakeCaptureGroup(CaptureGroup parent);
     }
 }

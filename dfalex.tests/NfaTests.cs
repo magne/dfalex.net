@@ -59,8 +59,8 @@ namespace CodeHive.DfaLex.Tests
             var start = nfa.AddState();
             var accept = nfa.AddState(1);
 
-            var state = regex.AddToNfa(nfa, accept);
-            nfa.AddEpsilon(start, state);
+            var state = regex.AddToNfa(nfa, accept, CaptureGroup.NoGroup);
+            nfa.AddEpsilon(start, state, NfaTransitionPriority.Normal, Tag.None);
 
             PrintDot(nfa.Build(), start);
         }
@@ -71,8 +71,8 @@ namespace CodeHive.DfaLex.Tests
             var start = nfa.AddState();
             var accept = nfa.AddState(1);
 
-            var state = regex.AddToNfa(nfa, accept);
-            nfa.AddEpsilon(start, state);
+            var state = regex.AddToNfa(nfa, accept, CaptureGroup.NoGroup);
+            nfa.AddEpsilon(start, state, NfaTransitionPriority.Normal, Tag.None);
 
             CheckNfa(nfa.Build(), state, $"NfaTests.out.txt#{resourceSection}");
         }

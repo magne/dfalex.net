@@ -422,18 +422,18 @@ namespace CodeHive.DfaLex
                             matchState = nfa.AddState();
                             foreach (var pat in patList)
                             {
-                                nfa.AddEpsilon(matchState, pat.AddToNfa(nfa, acceptState));
+                                nfa.AddEpsilon(matchState, pat.AddToNfa(nfa, acceptState, CaptureGroup.NoGroup), NfaTransitionPriority.Normal, Tag.None);
                             }
                         }
                         else
                         {
                             //only one pattern no union necessary
-                            matchState = patList[0].AddToNfa(nfa, acceptState);
+                            matchState = patList[0].AddToNfa(nfa, acceptState, CaptureGroup.NoGroup);
                         }
                     }
 
                     //language i matches these patterns
-                    nfa.AddEpsilon(nfaStartStates[i], matchState);
+                    nfa.AddEpsilon(nfaStartStates[i], matchState, NfaTransitionPriority.Normal, Tag.None);
                 }
             }
 
@@ -469,8 +469,8 @@ namespace CodeHive.DfaLex
 
                     foreach (var pat in patEntry.Value)
                     {
-                        var st = pat.Reversed.AddToNfa(nfa, endState);
-                        nfa.AddEpsilon(startState, st);
+                        var st = pat.Reversed.AddToNfa(nfa, endState, CaptureGroup.NoGroup);
+                        nfa.AddEpsilon(startState, st, NfaTransitionPriority.Normal, Tag.None);
                     }
                 }
             }
@@ -479,7 +479,7 @@ namespace CodeHive.DfaLex
             startState = nfa.Disemptify(startState);
 
             //allow anything first
-            startState = Pattern.MaybeRepeat(CharRange.All).AddToNfa(nfa, startState);
+            startState = Pattern.MaybeRepeat(CharRange.All).AddToNfa(nfa, startState, CaptureGroup.NoGroup);
 
             //build the DFA
             var rawDfa = new DfaFromNfa<bool>(nfa.Build(), new[] { startState }, ambiguityResolver).GetDfa();

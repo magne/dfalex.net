@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using CodeHive.DfaLex.tree;
 
 namespace CodeHive.DfaLex.Tests
 {
@@ -36,6 +37,14 @@ namespace CodeHive.DfaLex.Tests
         {
             var ctx = new NfaContext<T>(nfa, state, useStateNumbers);
             var printer = new DotPrinter<int, T>(ctx, "nfa");
+
+            return printer.Print();
+        }
+
+        internal static string PrintDot(TNfa tnfa, bool useStateNumbers = false)
+        {
+            var ctx = new TNfaContext(tnfa, useStateNumbers);
+            var printer = new DotPrinter<State, int>(ctx, "tnfa");
 
             return printer.Print();
         }
@@ -137,7 +146,7 @@ namespace CodeHive.DfaLex.Tests
 
             public abstract TState GetNextState(TState state, char ch);
 
-            public abstract void ForTransitions(TState state, Action empty, Action<TState, bool> epsilon, Action<TState, char, char, bool> transition);
+            public abstract void ForTransitions(TState state, Action empty, Action<TState, bool, Tag> epsilon, Action<TState, char, char, bool> transition);
 
             public string GetTransitionChars(TState state)
             {
@@ -180,7 +189,7 @@ namespace CodeHive.DfaLex.Tests
 
             public override void ForTransitions(DfaState<T> state,
                 Action empty,
-                Action<DfaState<T>, bool> epsilon,
+                Action<DfaState<T>, bool, Tag> epsilon,
                 Action<DfaState<T>, char, char, bool> transition)
             {
                 var isEmpty = true;
@@ -229,7 +238,7 @@ namespace CodeHive.DfaLex.Tests
                 return nextState;
             }
 
-            public override void ForTransitions(int state, Action empty, Action<int, bool> epsilon, Action<int, char, char, bool> transition)
+            public override void ForTransitions(int state, Action empty, Action<int, bool, Tag> epsilon, Action<int, char, char, bool> transition)
             {
                 var isEmpty = true;
                 dfa.States[state].ForEachTransition(trans =>
@@ -288,7 +297,7 @@ namespace CodeHive.DfaLex.Tests
                 throw new InvalidOperationException($"No transition from {StateName(state)} on '{ch}'");
             }
 
-            public override void ForTransitions(int state, Action empty, Action<int, bool> epsilon, Action<int, char, char, bool> transition)
+            public override void ForTransitions(int state, Action empty, Action<int, bool, Tag> epsilon, Action<int, char, char, bool> transition)
             {
                 if (!nfa.GetStateEpsilons(state).Any() && !nfa.GetStateTransitions(state).Any())
                 {
@@ -298,12 +307,91 @@ namespace CodeHive.DfaLex.Tests
                 {
                     if (epsilon != null)
                     {
-                        nfa.ForStateEpsilons(state, trans => epsilon(trans.State, trans.Priority == NfaTransitionPriority.Low));
+                        nfa.ForStateEpsilons(state, trans => epsilon(trans.State, trans.Priority == NfaTransitionPriority.Low, Tag.None));
                     }
 
                     if (transition != null)
                     {
                         nfa.ForStateTransitions(state, trans => transition(trans.State, trans.FirstChar, trans.LastChar, trans.Priority == NfaTransitionPriority.Low));
+                    }
+                }
+            }
+        }
+
+        private class TNfaContext : Context<State, int>
+        {
+            private readonly TNfa tnfa;
+
+            public TNfaContext(TNfa tnfa, bool useStateNumbers)
+                : base(useStateNumbers)
+            {
+                this.tnfa = tnfa;
+                StartStates = new[] {tnfa.initialState};
+            }
+
+            protected override int GetStateNumber(State state) => state.Id;
+
+            public override bool HasIncomingEpsilon(State target)
+            {
+                foreach (var transitions in tnfa.epsilonTransitions.Values)
+                {
+                    if (transitions.Any(trans => target.Equals(trans.State)))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            public override bool IsAccepting(State state) => state.Equals(tnfa.finalState);
+
+            public override int GetMatch(State state) => 0;
+
+            public override State GetNextState(State state, char ch)
+            {
+                foreach (var ((next, range), transitions) in tnfa.transitions)
+                {
+                    if (state.Equals(next) && range.Contains(ch))
+                    {
+                        return transitions.First().State;
+                    }
+                }
+
+                return null;
+            }
+
+            public override void ForTransitions(State state, Action empty, Action<State, bool, Tag> epsilon, Action<State, char, char, bool> transition)
+            {
+                if (!tnfa.epsilonTransitions.Any() && !tnfa.transitions.Any())
+                {
+                    empty?.Invoke();
+                }
+                else
+                {
+                    if (epsilon != null)
+                    {
+                        if (tnfa.epsilonTransitions.TryGetValue(state, out var transitions))
+                        {
+                            foreach (var trans in transitions)
+                            {
+                                epsilon(trans.State, trans.Priority == NfaTransitionPriority.Low, trans.Tag);
+                            }
+                        }
+                    }
+
+                    if (transition != null)
+                    {
+                        foreach (var ((target, ir), transitions) in tnfa.transitions)
+                        {
+                            if (state.Equals(target))
+                            {
+                                foreach (var trans in transitions)
+                                {
+                                    transition(trans.State, ir.From, ir.To, trans.Priority == NfaTransitionPriority.Low);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -341,7 +429,7 @@ namespace CodeHive.DfaLex.Tests
 
                 ctx.ForTransitions(state,
                     WriteEmpty,
-                    (target, lowPriority) => WriteEpsilon(state, target, lowPriority),
+                    (target, lowPriority, tag) => WriteEpsilon(state, target, lowPriority, tag),
                     (target, cMin, cMax, lowPriority) => WriteTransition(state, target, cMin, cMax, lowPriority));
             }
 
@@ -359,7 +447,7 @@ namespace CodeHive.DfaLex.Tests
             protected virtual void WriteEmpty()
             { }
 
-            protected virtual void WriteEpsilon(TState state, TState target, bool lowPriority)
+            protected virtual void WriteEpsilon(TState state, TState target, bool lowPriority, Tag tag)
             { }
 
             protected abstract void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority);
@@ -424,7 +512,7 @@ namespace CodeHive.DfaLex.Tests
                 AppendLine("    (done)");
             }
 
-            protected override void WriteEpsilon(TState state, TState target, bool lowPriority)
+            protected override void WriteEpsilon(TState state, TState target, bool lowPriority, Tag tag)
             {
                 AppendLine($"   {(lowPriority ? "-" : " ")}ε -> {StateName(target)}");
             }
@@ -492,9 +580,9 @@ namespace CodeHive.DfaLex.Tests
                 }
             }
 
-            protected override void WriteEpsilon(TState state, TState target, bool lowPriority)
+            protected override void WriteEpsilon(TState state, TState target, bool lowPriority, Tag tag)
             {
-                AppendLine($"{StateName(state)} -> {StateName(target)} [label=\"{(lowPriority ? "-" : string.Empty)}ε\"]");
+                AppendLine($"{StateName(state)} -> {StateName(target)} [label=\"{(lowPriority ? "-" : string.Empty)}ε{(tag == Tag.None ? string.Empty : $" {tag}")}\"]");
             }
 
             protected override void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority)

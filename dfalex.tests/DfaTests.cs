@@ -33,8 +33,8 @@ namespace CodeHive.DfaLex.Tests
             var start = nfa.AddState();
             var accept = nfa.AddState(match);
 
-            var state = pattern.AddToNfa(nfa, accept);
-            nfa.AddEpsilon(start, state);
+            var state = pattern.AddToNfa(nfa, accept, CaptureGroup.NoGroup);
+            nfa.AddEpsilon(start, state, NfaTransitionPriority.Normal, Tag.None);
 
             return start;
         }

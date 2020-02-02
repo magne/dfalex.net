@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using CodeHive.DfaLex.tree;
 using FluentAssertions;
 using Xunit.Abstractions;
 
@@ -25,7 +26,7 @@ namespace CodeHive.DfaLex.Tests
             this.helper = helper;
         }
 
-        internal int CountStates<T>(params DfaState<T>[] starts)
+        internal static int CountStates<T>(params DfaState<T>[] starts)
         {
             var togo = new Queue<DfaState<T>>();
             var checkSet = new HashSet<DfaState<T>>();
@@ -84,6 +85,11 @@ namespace CodeHive.DfaLex.Tests
         internal void PrintDot<T>(Nfa<T> nfa, int start)
         {
             helper.WriteLine(PrettyPrinter.PrintDot(nfa, start));
+        }
+
+        internal void PrintDot(TNfa tnfa)
+        {
+            helper.WriteLine(PrettyPrinter.PrintDot(tnfa));
         }
 
         internal void PrintDot<T>(DfaState<T> start)
