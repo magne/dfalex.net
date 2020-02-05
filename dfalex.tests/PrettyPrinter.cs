@@ -17,6 +17,14 @@ namespace CodeHive.DfaLex.Tests
             return printer.Print();
         }
 
+        internal static string Print(TNfa tnfa, bool useStateNumbers = false)
+        {
+            var ctx = new TNfaContext(tnfa, useStateNumbers);
+            var printer = new CompactPrinter<State, int>(ctx);
+
+            return printer.Print();
+        }
+
         internal static string Print<T>(RawDfa<T> dfa, bool useStatefulNumbers = false)
         {
             var ctx = new RawDfaContext<T>(dfa, useStatefulNumbers);
@@ -363,7 +371,9 @@ namespace CodeHive.DfaLex.Tests
 
             public override void ForTransitions(State state, Action empty, Action<State, bool, Tag> epsilon, Action<State, char, char, bool> transition)
             {
-                if (!tnfa.epsilonTransitions.Any() && !tnfa.transitions.Any())
+                var ft = tnfa.transitions.Keys.Where((s, _) => s.state.Equals(state));
+                var t = ft.Aggregate(false, (current, f) => current || tnfa.transitions[f].Any());
+                if ((!tnfa.epsilonTransitions.TryGetValue(state, out var finalEpsilons) || !finalEpsilons.Any()) && !t)
                 {
                     empty?.Invoke();
                 }
@@ -514,7 +524,7 @@ namespace CodeHive.DfaLex.Tests
 
             protected override void WriteEpsilon(TState state, TState target, bool lowPriority, Tag tag)
             {
-                AppendLine($"   {(lowPriority ? "-" : " ")}ε -> {StateName(target)}");
+                AppendLine($"   {(lowPriority ? "-" : " ")}ε{(tag == Tag.None ? string.Empty : $" {tag}")} -> {StateName(target)}");
             }
 
             protected override void WriteTransition(TState state, TState target, char cMin, char cMax, bool lowPriority)

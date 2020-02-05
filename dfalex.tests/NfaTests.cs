@@ -18,11 +18,11 @@ namespace CodeHive.DfaLex.Tests
             yield return Make("Catenate",      "ab",    Pattern.Match("a").Then("b"), true);
             yield return Make("Alternate",     "a|b|c", Pattern.AnyOf("a", "b", "c"));
             yield return Make("Question",      "a?",    Pattern.Maybe("a"));
-            yield return Make("Question Lazy", null,    Pattern.MaybeLazy("a"));
+            yield return Make("Question Lazy", "a??",   Pattern.MaybeLazy("a"));
             yield return Make("Star",          "a*",    Pattern.MaybeRepeat("a"));
-            yield return Make("Star Lazy",     null,    Pattern.MaybeRepeatLazy("a"));
+            yield return Make("Star Lazy",     "a*?",   Pattern.MaybeRepeatLazy("a"));
             yield return Make("Plus",          "a+",    Pattern.Repeat("a"));
-            yield return Make("Plus Lazy",     null,    Pattern.RepeatLazy("a"));
+            yield return Make("Plus Lazy",     "a+?",   Pattern.RepeatLazy("a"));
         }
 
         [Theory]

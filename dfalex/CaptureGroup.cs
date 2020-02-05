@@ -21,13 +21,13 @@ namespace CodeHive.DfaLex
     {
         internal static readonly CaptureGroup NoGroup = new CaptureGroup(null, -1);
 
-        private readonly CaptureGroup parent;
-
         private CaptureGroup(CaptureGroup parent, int number)
         {
-            this.parent = parent ?? this;
+            Parent = parent ?? this;
             Number = number;
         }
+
+        public CaptureGroup Parent { get; }
 
         public int Number { get; }
 

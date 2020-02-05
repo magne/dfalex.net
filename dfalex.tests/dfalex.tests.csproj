@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="tree\TNfaTests.out.txt" />
     <None Remove="By3Test.out.txt" />
     <EmbeddedResource Include="By3Test.out.txt" />
     <None Remove="JavaTest.out.txt" />

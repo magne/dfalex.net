@@ -1,0 +1,131 @@
+[Catenate]
+S0
+    ε ➀0 -> S1
+S1
+    a -> b -> S2
+S2
+    ε ➁0 -> S3:0
+S3:0
+    (done)
+
+[Catenate Reversed]
+S0
+    ε ➀0 -> S1
+S1
+    b -> a -> S2
+S2
+    ε ➁0 -> S3:0
+S3:0
+    (done)
+
+[Alternate]
+S0
+    ε ➀0 -> S1
+S1
+    ε -> S2
+    ε -> S3
+S2
+    c -> S4
+S3
+    ε -> S5
+    ε -> S6
+S4
+   -ε -> S7
+S5
+    b -> S8
+S6
+    a -> S9
+S7
+    ε ➁0 -> S10:0
+S8
+   -ε -> S11
+S9
+    ε -> S11
+S10:0
+    (done)
+S11
+    ε -> S7
+
+[Question]
+S0
+    ε ➀0 -> S1
+S1
+   -ε -> S2
+    ε -> S3
+S2
+    ε ➁0 -> S4:0
+S3
+    a -> S2
+S4:0
+    (done)
+
+[Question Lazy]
+S0
+    ε ➀0 -> S1
+S1
+    ε -> S2
+   -ε -> S3
+S2
+    ε ➁0 -> S4:0
+S3
+    a -> S2
+S4:0
+    (done)
+
+[Star]
+S0
+    ε ➀0 -> S1
+S1
+   -ε -> S2
+    ε -> S3
+S2
+    ε ➁0 -> S4:0
+S3
+    a -> S5
+S4:0
+    (done)
+S5
+   -ε -> S2
+    ε -> S3
+
+[Star Lazy]
+S0
+    ε ➀0 -> S1
+S1
+    ε -> S2
+   -ε -> S3
+S2
+    ε ➁0 -> S4:0
+S3
+    a -> S5
+S4:0
+    (done)
+S5
+    ε -> S2
+   -ε -> S3
+
+[Plus]
+S0
+    ε ➀0 -> S1
+S1
+    a -> S2
+S2
+   -ε -> S3
+    ε -> S1
+S3
+    ε ➁0 -> S4:0
+S4:0
+    (done)
+
+[Plus Lazy]
+S0
+    ε ➀0 -> S1
+S1
+    a -> S2
+S2
+    ε -> S3
+   -ε -> S1
+S3
+    ε ➁0 -> S4:0
+S4:0
+    (done)

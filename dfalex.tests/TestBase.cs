@@ -59,6 +59,12 @@ namespace CodeHive.DfaLex.Tests
             CheckStates(have, resource, doStdout);
         }
 
+        internal void CheckTNfa(TNfa tnfa, string resource, bool doStdout = false)
+        {
+            var have = PrettyPrinter.Print(tnfa);
+            CheckStates(have, resource, doStdout);
+        }
+
         internal void CheckDfa<T>(RawDfa<T> dfa, string resource, bool doStdout = false)
         {
             var have = PrettyPrinter.Print(dfa);

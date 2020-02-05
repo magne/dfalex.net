@@ -23,9 +23,9 @@ namespace CodeHive.DfaLex.tree
             this.tags = tags;
         }
 
-        private IList<InputRange> AllInputRanges => transitions.Keys.Select(key => key.range).ToList();
+        internal IList<InputRange> AllInputRanges => transitions.Keys.Select(key => key.range).ToList();
 
-        private ISet<Tag> AllTags
+        internal ISet<Tag> AllTags
         {
             get
             {
@@ -40,12 +40,12 @@ namespace CodeHive.DfaLex.tree
             }
         }
 
-        private IList<Transition> AvailableTransitionsFor(State q, InputRange ir)
+        internal IList<Transition> AvailableTransitionsFor(State q, InputRange ir)
         {
             return transitions.TryGetValue((q, ir), out var ret) ? ret : new List<Transition>();
         }
 
-        private IList<Transition> AvailableEpsilonTransitionsFor(State q)
+        internal IList<Transition> AvailableEpsilonTransitionsFor(State q)
         {
             return epsilonTransitions.TryGetValue(q, out var ret) ? ret : new List<Transition>();
         }
@@ -102,7 +102,7 @@ namespace CodeHive.DfaLex.tree
 
             public State MakeFinalState()
             {
-                return this.finalState = new State();
+                return finalState = new State();
             }
 
             public CaptureGroup MakeCaptureGroup(CaptureGroup parent)
