@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+using System.Collections.Generic;
+
 namespace CodeHive.DfaLex
 {
     /// <summary>
@@ -59,5 +61,8 @@ namespace CodeHive.DfaLex
         /// </summary>
         /// <returns>The reverse of this pattern</returns>
         IMatchable Reversed { get; }
+
+        // TODO remove when we get rid of InputRange
+        IEnumerable<IMatchable> Children { get; }
     }
 }

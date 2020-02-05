@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace CodeHive.DfaLex.Tests
         private static readonly Regex SectionPattern = new Regex(@"\s*^\[(?<section>.+?)\]\s+(?<content>[^[]*)",
             System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.Multiline);
 
-        private static readonly IDictionary<string, string> Resources = new Dictionary<string, string>();
+        private static readonly IDictionary<string, string> Resources = new ConcurrentDictionary<string, string>();
 
         private readonly ITestOutputHelper helper;
 

@@ -14,8 +14,6 @@ namespace CodeHive.DfaLex.tree
 
         private Instruction.InstructionMaker instructionMaker = Instruction.InstructionMaker.Get;
 
-        private TDFATransitionTable.Builder tdfaBuilder = new TDFATransitionTable.Builder();
-
         internal readonly TNfa tnfa;
 
         internal TNFAToTDFA(TNfa tnfa)

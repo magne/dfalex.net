@@ -14,16 +14,17 @@ namespace CodeHive.DfaLex.Tests.tree
         public static IEnumerable<object[]> GetMatchables()
         {
             static object[] Make(string section, string regex, IMatchable matchable, bool reversed = false) =>
-                new object[] { (section, regex, matchable, reversed).Labeled($"{section}: {regex}") };
+                new object[] {(section, regex, matchable, reversed).Labeled($"{section}: {regex}")};
 
-            yield return Make("Catenate",      "ab",    Pattern.Match("a").Then("b"), true);
-            yield return Make("Alternate",     "a|b|c", Pattern.AnyOf("a", "b", "c"));
-            yield return Make("Question",      "a?",    Pattern.Maybe("a"));
-            yield return Make("Question Lazy", "a??",   Pattern.MaybeLazy("a"));
-            yield return Make("Star",          "a*",    Pattern.MaybeRepeat("a"));
-            yield return Make("Star Lazy",     "a*?",   Pattern.MaybeRepeatLazy("a"));
-            yield return Make("Plus",          "a+",    Pattern.Repeat("a"));
-            yield return Make("Plus Lazy",     "a+?",   Pattern.RepeatLazy("a"));
+            yield return Make("Catenate",      "ab",         Pattern.Match("a").Then("b"), true);
+            yield return Make("Alternate",     "a|b|c",      Pattern.AnyOf("a", "b", "c"));
+            yield return Make("Question",      "a?",         Pattern.Maybe("a"));
+            yield return Make("Question Lazy", "a??",        Pattern.MaybeLazy("a"));
+            yield return Make("Star",          "a*",         Pattern.MaybeRepeat("a"));
+            yield return Make("Star Lazy",     "a*?",        Pattern.MaybeRepeatLazy("a"));
+            yield return Make("Plus",          "a+",         Pattern.Repeat("a"));
+            yield return Make("Plus Lazy",     "a+?",        Pattern.RepeatLazy("a"));
+            yield return Make("Range",         "[a-b][b-c]", Pattern.Match(CharRange.Range('a', 'b')).Then(CharRange.Range('b', 'c')), true);
         }
 
         [Theory]
@@ -64,6 +65,7 @@ namespace CodeHive.DfaLex.Tests.tree
         {
             var tnfa = RegexToNfa.Convert(regex);
 
+            PrintDot(tnfa);
             CheckTNfa(tnfa, $"tree.TNfaTests.out.txt#{resourceSection}", true);
         }
     }

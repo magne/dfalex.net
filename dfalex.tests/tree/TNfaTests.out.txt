@@ -86,7 +86,7 @@ S4:0
     (done)
 S5
    -ε -> S2
-    ε -> S3
+    ε -> S1
 
 [Star Lazy]
 S0
@@ -102,7 +102,7 @@ S4:0
     (done)
 S5
     ε -> S2
-   -ε -> S3
+    ε -> S1
 
 [Plus]
 S0
@@ -125,6 +125,34 @@ S1
 S2
     ε -> S3
    -ε -> S1
+S3
+    ε ➁0 -> S4:0
+S4:0
+    (done)
+
+[Range]
+S0
+    ε ➀0 -> S1
+S1
+    a -> S2
+    b -> S2
+S2
+    b -> S3
+    c -> S3
+S3
+    ε ➁0 -> S4:0
+S4:0
+    (done)
+
+[Range Reversed]
+S0
+    ε ➀0 -> S1
+S1
+    b -> S2
+    c -> S2
+S2
+    a -> S3
+    b -> S3
 S3
     ε ➁0 -> S4:0
 S4:0

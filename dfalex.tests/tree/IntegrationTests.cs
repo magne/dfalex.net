@@ -69,6 +69,7 @@ namespace CodeHive.DfaLex.Tests.tree
         {
             var parsed = Pattern.Regex("[a-b][b-c]");
             var tnfa = RegexToNfa.Convert(parsed);
+            PrintDot(tnfa);
 
             var interpreter = new TDFAInterpreter(TNFAToTDFA.Make(tnfa));
             var interpreted = interpreter.interpret("ab");

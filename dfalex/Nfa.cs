@@ -178,7 +178,8 @@ namespace CodeHive.DfaLex
 
             public void RegisterCaptureGroup(CaptureGroup cg)
             {
-                Debug.Assert(tags.Count / 2 == cg.Number);
+                // TODO Enable again when Nfa handles capture groups (or we convert regex left to right instead of right to left)
+                //Debug.Assert(tags.Count / 2 == cg.Number);
                 tags.Add(cg.StartTag);
                 tags.Add(cg.EndTag);
             }

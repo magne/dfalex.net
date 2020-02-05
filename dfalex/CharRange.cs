@@ -16,6 +16,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CodeHive.DfaLex
 {
@@ -60,7 +62,8 @@ namespace CodeHive.DfaLex
         // characters in here are in value order and are unique
         // a character c is in this CharRange iff m_bounds contains an ODD number of
         // characters <= c
-        private readonly char[] bounds;
+        // TODO make private again when we get rid of InputRange
+        internal readonly char[] bounds;
 
         private CharRange(char[] bounds)
         {
@@ -168,6 +171,9 @@ namespace CodeHive.DfaLex
         public bool IsUnbounded => false;
 
         public IMatchable Reversed => this;
+
+        // TODO remove when we get rid of InputRange
+        public IEnumerable<IMatchable> Children => Enumerable.Empty<IMatchable>();
 
         public override bool Equals(object obj)
         {

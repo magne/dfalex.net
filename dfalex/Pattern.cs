@@ -631,6 +631,9 @@ namespace CodeHive.DfaLex
 
         public abstract bool IsUnbounded { get; }
 
+        // TODO remove when we get rid of InputRange
+        public abstract IEnumerable<IMatchable> Children { get; }
+
         public IMatchable Reversed
         {
             get
@@ -683,6 +686,9 @@ namespace CodeHive.DfaLex
             {
                 return new CatPattern(then.Reversed, first.Reversed);
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => new[] {first, then};
         }
 
         [Serializable]
@@ -719,6 +725,9 @@ namespace CodeHive.DfaLex
 
                 return new WrapPattern(revmatch);
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => new[] {tomatch};
         }
 
         [Serializable]
@@ -746,12 +755,17 @@ namespace CodeHive.DfaLex
             {
                 return this;
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => Enumerable.Empty<IMatchable>();
         }
 
         [Serializable]
-        private class StringPattern : Pattern
+        // TODO make private again when we get rid of InputRange
+        internal class StringPattern : Pattern
         {
-            private readonly string tomatch;
+            // TODO make private again when we get rid of InputRange
+            internal readonly string tomatch;
 
             public StringPattern(string tomatch)
             {
@@ -788,12 +802,17 @@ namespace CodeHive.DfaLex
 
                 return new StringPattern(tomatch.Reverse());
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => Enumerable.Empty<IMatchable>();
         }
 
         [Serializable]
-        private class StringIPattern : Pattern
+        // TODO make private again when we get rid of InputRange
+        internal class StringIPattern : Pattern
         {
-            private readonly string tomatch;
+            // TODO make private again when we get rid of InputRange
+            internal readonly string tomatch;
 
             public StringIPattern(string tomatch)
             {
@@ -841,6 +860,9 @@ namespace CodeHive.DfaLex
 
                 return new StringIPattern(tomatch.Reverse());
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => Enumerable.Empty<IMatchable>();
         }
 
         [Serializable]
@@ -862,14 +884,14 @@ namespace CodeHive.DfaLex
                 var repState = nfa.AddState();
                 nfa.AddEpsilon(repState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
                 var startState = pattern.AddToNfa(nfa, repState, captureGroup);
-                if (needAtLeastOne || pattern.MatchesEmpty)
+                if (needAtLeastOne) // || pattern.MatchesEmpty)
                 {
                     nfa.AddEpsilon(repState, startState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
                     return startState;
                 }
 
                 var skipState = nfa.AddState();
-                nfa.AddEpsilon(repState,  skipState, NfaTransitionPriority.Normal, Tag.None);
+                nfa.AddEpsilon(repState,  skipState,   NfaTransitionPriority.Normal,                                    Tag.None);
                 nfa.AddEpsilon(skipState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
                 nfa.AddEpsilon(skipState, startState,  lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
                 return skipState;
@@ -894,6 +916,9 @@ namespace CodeHive.DfaLex
 
                 return new RepeatingPattern(patternReversed, needAtLeastOne, lazy);
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => new[] {pattern};
         }
 
         [Serializable]
@@ -941,6 +966,9 @@ namespace CodeHive.DfaLex
 
                 return new OptionalPattern(revpat, lazy);
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => new[] {pattern};
         }
 
         [Serializable]
@@ -962,7 +990,7 @@ namespace CodeHive.DfaLex
                 var patternState = pattern.AddToNfa(nfa, endState, cg);
 
                 nfa.AddEpsilon(startState, patternState, NfaTransitionPriority.Normal, cg.StartTag);
-                nfa.AddEpsilon(endState, targetState, NfaTransitionPriority.Normal, cg.EndTag);
+                nfa.AddEpsilon(endState,   targetState,  NfaTransitionPriority.Normal, cg.EndTag);
 
                 return startState;
             }
@@ -983,6 +1011,9 @@ namespace CodeHive.DfaLex
 
                 return new GroupPattern(revpat);
             }
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => new[] {pattern};
         }
 
         [Serializable]
@@ -1027,11 +1058,11 @@ namespace CodeHive.DfaLex
                 var pattern = new UnionPattern(newChoices);
 
                 var endState = nfa.AddState();
-                nfa.AddEpsilon(endState,   targetState, NfaTransitionPriority.Low, Tag.None);
+                nfa.AddEpsilon(endState,   targetState,                                                       NfaTransitionPriority.Low,    Tag.None);
                 nfa.AddEpsilon(startState, choices[choices.Length - 1].AddToNfa(nfa, endState, captureGroup), NfaTransitionPriority.Normal, Tag.None);
 
                 endState = nfa.AddState();
-                nfa.AddEpsilon(endState,   targetState, NfaTransitionPriority.Normal, Tag.None);
+                nfa.AddEpsilon(endState,   targetState,                                   NfaTransitionPriority.Normal, Tag.None);
                 nfa.AddEpsilon(startState, pattern.AddToNfa(nfa, endState, captureGroup), NfaTransitionPriority.Normal, Tag.None);
 
                 return startState;
@@ -1044,6 +1075,9 @@ namespace CodeHive.DfaLex
             public override bool MatchesSomething => MatchesEmpty || MatchesNonEmpty;
 
             public override bool IsUnbounded => Check(Checks.UnboundChecked, Checks.UnboundMatch, pattern => pattern.IsUnbounded);
+
+            // TODO remove when we get rid of InputRange
+            public override IEnumerable<IMatchable> Children => choices;
 
             protected override Pattern CalcReverse()
             {

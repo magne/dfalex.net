@@ -59,9 +59,11 @@ namespace CodeHive.DfaLex.tree
             private readonly IList<Tag>                                          tags               = new List<Tag>();
             private          State                                               initialState;
             private          State                                               finalState;
+            private readonly SortedSet<InputRange>                               allInputRanges;
 
-            public Builder()
+            public Builder(IEnumerable<InputRange> allInputRanges)
             {
+                this.allInputRanges = new SortedSet<InputRange>(InputRangeCleanup.CleanUp(allInputRanges));
                 RegisterCaptureGroup(CaptureGroupMaker.EntireMatch);
             }
 
@@ -74,14 +76,19 @@ namespace CodeHive.DfaLex.tree
 
             public void AddTransition(State from, State to, char firstChar, char lastChar)
             {
-                var range = InputRange.Make(firstChar, lastChar);
-                if (!inputTransitions.TryGetValue((from, range), out var transitions))
+                var lower = InputRange.Make(firstChar);
+                var upper = InputRange.Make(lastChar);
+                var overlappedRanges = allInputRanges.GetViewBetween(lower, upper);
+                foreach (var key in overlappedRanges.Select(ir => (from, ir)))
                 {
-                    transitions = new List<Transition>();
-                    inputTransitions[(from, range)] = transitions;
-                }
+                    if (!inputTransitions.TryGetValue(key, out var transitions))
+                    {
+                        transitions = new List<Transition>();
+                        inputTransitions[key] = transitions;
+                    }
 
-                transitions.Add(new Transition(to, NfaTransitionPriority.Normal, Tag.None));
+                    transitions.Add(new Transition(to, NfaTransitionPriority.Normal, Tag.None));
+                }
             }
 
             public void AddEpsilon(State from, State to, NfaTransitionPriority priority, Tag tag)
