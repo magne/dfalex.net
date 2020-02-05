@@ -422,13 +422,16 @@ namespace CodeHive.DfaLex
                             matchState = nfa.AddState();
                             foreach (var pat in patList)
                             {
-                                nfa.AddEpsilon(matchState, pat.AddToNfa(nfa, acceptState, CaptureGroup.NoGroup), NfaTransitionPriority.Normal, Tag.None);
+                                var endState = pat.AddToNfaF(nfa, matchState, CaptureGroup.NoGroup);
+                                nfa.AddEpsilon(endState, acceptState, NfaTransitionPriority.Normal, Tag.None);
                             }
                         }
                         else
                         {
                             //only one pattern no union necessary
-                            matchState = patList[0].AddToNfa(nfa, acceptState, CaptureGroup.NoGroup);
+                            matchState = nfa.AddState();
+                            var endState = patList[0].AddToNfaF(nfa, matchState, CaptureGroup.NoGroup);
+                            nfa.AddEpsilon(endState, acceptState, NfaTransitionPriority.Normal, Tag.None);
                         }
                     }
 
@@ -469,8 +472,8 @@ namespace CodeHive.DfaLex
 
                     foreach (var pat in patEntry.Value)
                     {
-                        var st = pat.Reversed.AddToNfa(nfa, endState, CaptureGroup.NoGroup);
-                        nfa.AddEpsilon(startState, st, NfaTransitionPriority.Normal, Tag.None);
+                        var st = pat.Reversed.AddToNfaF(nfa, startState, CaptureGroup.NoGroup);
+                        nfa.AddEpsilon(st, endState, NfaTransitionPriority.Normal, Tag.None);
                     }
                 }
             }
@@ -479,10 +482,11 @@ namespace CodeHive.DfaLex
             startState = nfa.Disemptify(startState);
 
             //allow anything first
-            startState = Pattern.MaybeRepeat(CharRange.All).AddToNfa(nfa, startState, CaptureGroup.NoGroup);
+            var beginState = nfa.AddState();
+            nfa.AddEpsilon(Pattern.MaybeRepeat(CharRange.All).AddToNfaF(nfa, beginState, CaptureGroup.NoGroup), startState, NfaTransitionPriority.Normal, Tag.None);
 
             //build the DFA
-            var rawDfa = new DfaFromNfa<bool>(nfa.Build(), new[] { startState }, ambiguityResolver).GetDfa();
+            var rawDfa = new DfaFromNfa<bool>(nfa.Build(), new[] { beginState }, ambiguityResolver).GetDfa();
             var minimalDfa = new DfaMinimizer<bool>(rawDfa).GetMinimizedDfa();
             var serializableDfa = new SerializableDfa<bool>(minimalDfa);
             return serializableDfa;

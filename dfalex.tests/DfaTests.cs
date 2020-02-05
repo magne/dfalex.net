@@ -31,10 +31,8 @@ namespace CodeHive.DfaLex.Tests
         private static int AddToNfa<T>(Nfa<T>.Builder nfa, IMatchable pattern, T match)
         {
             var start = nfa.AddState();
-            var accept = nfa.AddState(match);
-
-            var state = pattern.AddToNfa(nfa, accept, CaptureGroup.NoGroup);
-            nfa.AddEpsilon(start, state, NfaTransitionPriority.Normal, Tag.None);
+            var state = pattern.AddToNfaF(nfa, start, CaptureGroup.NoGroup);
+            nfa.SetAccepting(state, match);
 
             return start;
         }

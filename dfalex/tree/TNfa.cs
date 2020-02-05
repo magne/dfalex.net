@@ -102,14 +102,14 @@ namespace CodeHive.DfaLex.tree
                 transitions.Add(new Transition(to, priority, tag));
             }
 
-            public void SetAsInitial(State state)
+            public State MakeInitialState()
             {
-                initialState = state;
+                return initialState = new State();
             }
 
-            public State MakeFinalState()
+            public void SetAsFinal(State state)
             {
-                return finalState = new State();
+                finalState = state;
             }
 
             public CaptureGroup MakeCaptureGroup(CaptureGroup parent)

@@ -68,6 +68,11 @@ namespace CodeHive.DfaLex
                 return state;
             }
 
+            public void SetAccepting(int state, TResult accept)
+            {
+                stateAccepts[state] = (true, accept);
+            }
+
             /// <summary>
             /// Add a transition to the NFA.
             /// </summary>

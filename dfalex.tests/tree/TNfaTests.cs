@@ -14,10 +14,11 @@ namespace CodeHive.DfaLex.Tests.tree
         public static IEnumerable<object[]> GetMatchables()
         {
             static object[] Make(string section, string regex, IMatchable matchable, bool reversed = false) =>
-                new object[] {(section, regex, matchable, reversed).Labeled($"{section}: {regex}")};
+                new object[] { (section, regex, matchable, reversed).Labeled($"{section}: {regex}") };
 
             yield return Make("Catenate",      "ab",         Pattern.Match("a").Then("b"), true);
-            yield return Make("Alternate",     "a|b|c",      Pattern.AnyOf("a", "b", "c"));
+            yield return Make("Alternate",     "a|b",        Pattern.AnyOf("a", "b"));
+            yield return Make("Alternate3",    "a|b|c",      Pattern.AnyOf("a", "b", "c"));
             yield return Make("Question",      "a?",         Pattern.Maybe("a"));
             yield return Make("Question Lazy", "a??",        Pattern.MaybeLazy("a"));
             yield return Make("Star",          "a*",         Pattern.MaybeRepeat("a"));

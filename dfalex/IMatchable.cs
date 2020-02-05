@@ -42,6 +42,8 @@ namespace CodeHive.DfaLex
         /// matching the pattern. This may be <paramref name="targetState"/> if the pattern is an empty string.</returns>
         TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup);
 
+        TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup);
+
         /// <returns><c>true</c> if this pattern matches the empty string</returns>
         bool MatchesEmpty { get; }
 

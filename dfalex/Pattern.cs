@@ -623,6 +623,8 @@ namespace CodeHive.DfaLex
 
         public abstract TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup);
 
+        public abstract TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup);
+
         public abstract bool MatchesEmpty { get; }
 
         public abstract bool MatchesNonEmpty { get; }
@@ -674,6 +676,13 @@ namespace CodeHive.DfaLex
                 return targetState;
             }
 
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                startState = first.AddToNfaF(nfa, startState, captureGroup);
+                startState = then.AddToNfaF(nfa, startState, captureGroup);
+                return startState;
+            }
+
             public override bool MatchesEmpty { get; }
 
             public override bool MatchesNonEmpty => first.MatchesNonEmpty ? then.MatchesSomething : first.MatchesEmpty && then.MatchesNonEmpty;
@@ -706,6 +715,11 @@ namespace CodeHive.DfaLex
                 return tomatch.AddToNfa(nfa, targetState, captureGroup);
             }
 
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                return tomatch.AddToNfaF(nfa, startState, captureGroup);
+            }
+
             public override bool MatchesEmpty => tomatch.MatchesEmpty;
 
             public override bool MatchesNonEmpty => tomatch.MatchesNonEmpty;
@@ -736,6 +750,11 @@ namespace CodeHive.DfaLex
             public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
             {
                 return targetState;
+            }
+
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                return startState;
             }
 
             public override bool MatchesEmpty => true;
@@ -783,6 +802,18 @@ namespace CodeHive.DfaLex
                 }
 
                 return targetState;
+            }
+
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                foreach (var ch in tomatch)
+                {
+                    var newState = nfa.AddState();
+                    nfa.AddTransition(startState, newState, ch, ch);
+                    startState = newState;
+                }
+
+                return startState;
             }
 
             public override bool MatchesEmpty => tomatch.Length == 0;
@@ -843,6 +874,31 @@ namespace CodeHive.DfaLex
                 return targetState;
             }
 
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                foreach (var ch in tomatch)
+                {
+                    var newState = nfa.AddState();
+                    nfa.AddTransition(startState, newState, ch, ch);
+
+                    var lc = char.ToLowerInvariant(ch);
+                    if (lc != ch)
+                    {
+                        nfa.AddTransition(startState, newState, lc, lc);
+                    }
+
+                    var uc = char.ToUpperInvariant(ch);
+                    if (uc != ch)
+                    {
+                        nfa.AddTransition(startState, newState, uc, uc);
+                    }
+
+                    startState = newState;
+                }
+
+                return startState;
+            }
+
             public override bool MatchesEmpty => tomatch.Length == 0;
 
             public override bool MatchesNonEmpty => tomatch.Length > 0;
@@ -897,6 +953,30 @@ namespace CodeHive.DfaLex
                 return skipState;
             }
 
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                // TODO Enable optimization?
+                var endState = nfa.AddState();
+                if (needAtLeastOne) // || pattern.MatchesEmpty)
+                {
+                    var repState = pattern.AddToNfaF(nfa, startState, captureGroup);
+                    nfa.AddEpsilon(repState, startState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
+                    nfa.AddEpsilon(repState, endState,   lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
+                    return endState;
+                }
+                else
+                {
+                    var skipState = nfa.AddState();
+                    nfa.AddEpsilon(startState, endState,  lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
+                    nfa.AddEpsilon(startState, skipState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
+                    var repState = pattern.AddToNfaF(nfa, skipState, captureGroup);
+                    nfa.AddEpsilon(repState, endState,   lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low,    Tag.None);
+                    nfa.AddEpsilon(repState, startState, NfaTransitionPriority.Normal, Tag.None);
+                }
+
+                return endState;
+            }
+
             public override bool MatchesEmpty => !needAtLeastOne || pattern.MatchesEmpty;
 
             public override bool MatchesNonEmpty => pattern.MatchesNonEmpty;
@@ -947,6 +1027,21 @@ namespace CodeHive.DfaLex
                 return skipState;
             }
 
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                // TODO Enable optimization?
+                // if (pattern.MatchesEmpty)
+                // {
+                //     return pattern.AddToNfaF(nfa, startState, captureGroup);
+                // }
+
+                var skipState = nfa.AddState();
+                var targetState = pattern.AddToNfaF(nfa, skipState, captureGroup);
+                nfa.AddEpsilon(startState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
+                nfa.AddEpsilon(startState, skipState,   lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
+                return targetState;
+            }
+
             public override bool MatchesEmpty => true;
 
             public override bool MatchesNonEmpty => pattern.MatchesNonEmpty;
@@ -993,6 +1088,20 @@ namespace CodeHive.DfaLex
                 nfa.AddEpsilon(endState,   targetState,  NfaTransitionPriority.Normal, cg.EndTag);
 
                 return startState;
+            }
+
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup parentCaptureGroup)
+            {
+                var cg = nfa.MakeCaptureGroup(parentCaptureGroup);
+
+                var beginState = nfa.AddState();
+                var endState = nfa.AddState();
+                var patternState = pattern.AddToNfaF(nfa, beginState, cg);
+
+                nfa.AddEpsilon(startState,   beginState, NfaTransitionPriority.Normal, cg.StartTag);
+                nfa.AddEpsilon(patternState, endState,   NfaTransitionPriority.Normal, cg.EndTag);
+
+                return endState;
             }
 
             public override bool MatchesEmpty => pattern.MatchesEmpty;
@@ -1066,6 +1175,35 @@ namespace CodeHive.DfaLex
                 nfa.AddEpsilon(startState, pattern.AddToNfa(nfa, endState, captureGroup), NfaTransitionPriority.Normal, Tag.None);
 
                 return startState;
+            }
+
+            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            {
+                if (choices.Length == 0)
+                {
+                    return startState;
+                }
+
+                if (choices.Length == 1)
+                {
+                    return choices[0].AddToNfaF(nfa, startState, captureGroup);
+                }
+
+                var endState = nfa.AddState();
+
+                var newChoices = new IMatchable[choices.Length - 1];
+                Array.Copy(choices, newChoices, newChoices.Length);
+                var pattern = new UnionPattern(newChoices);
+
+                var beginState = nfa.AddState();
+                nfa.AddEpsilon(startState,                                                           beginState, NfaTransitionPriority.Normal, Tag.None);
+                nfa.AddEpsilon(choices[choices.Length - 1].AddToNfaF(nfa, beginState, captureGroup), endState,   NfaTransitionPriority.Low,    Tag.None);
+
+                beginState = nfa.AddState();
+                nfa.AddEpsilon(startState,                                       beginState, NfaTransitionPriority.Normal, Tag.None);
+                nfa.AddEpsilon(pattern.AddToNfaF(nfa, beginState, captureGroup), endState,   NfaTransitionPriority.Normal, Tag.None);
+
+                return endState;
             }
 
             public override bool MatchesEmpty => Check(Checks.EmptyChecked, Checks.EmptyMatch, pattern => pattern.MatchesEmpty);

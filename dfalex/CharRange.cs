@@ -79,11 +79,11 @@ namespace CodeHive.DfaLex
 
             if (last >= char.MaxValue)
             {
-                bounds = new[] {first};
+                bounds = new[] { first };
             }
             else
             {
-                bounds = new[] {first, (char) (last + 1)};
+                bounds = new[] { first, (char) (last + 1) };
             }
         }
 
@@ -160,6 +160,28 @@ namespace CodeHive.DfaLex
             }
 
             return startState;
+        }
+
+        public TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+        {
+            var targetState = nfa.AddState();
+            for (var i = 0; i < bounds.Length; i += 2)
+            {
+                var first = bounds[i];
+                char last;
+                if (i + 1 < bounds.Length)
+                {
+                    last = (char) (bounds[i + 1] - 1);
+                }
+                else
+                {
+                    last = char.MaxValue;
+                }
+
+                nfa.AddTransition(startState, targetState, first, last);
+            }
+
+            return targetState;
         }
 
         public bool MatchesEmpty => false;
