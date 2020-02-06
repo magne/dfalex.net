@@ -1,20 +1,24 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace CodeHive.DfaLex.tree
 {
     // ReSharper disable once InconsistentNaming
     internal class TNfa
     {
-        internal readonly IDictionary<(State state, InputRange range), IList<Transition>> transitions;
-        internal readonly IDictionary<State, IList<Transition>>                           epsilonTransitions;
-        internal readonly State                                                           initialState;
-        internal readonly State                                                           finalState;
-        private readonly  IList<Tag>                                                      tags;
+        internal readonly IDictionary<(int state, InputRange range), IList<Transition>> transitions;
+        internal readonly IDictionary<int, IList<Transition>>                           epsilonTransitions;
+        internal readonly int                                                           initialState;
+        internal readonly int                                                           finalState;
+        private readonly  IList<Tag>                                                    tags;
 
-        private TNfa(IDictionary<(State, InputRange), IList<Transition>> transitions, IDictionary<State, IList<Transition>> epsilonTransitions, State initialState,
-            State finalState, IList<Tag> tags)
+        private TNfa(IDictionary<(int, InputRange), IList<Transition>> transitions,
+                     IDictionary<int, IList<Transition>> epsilonTransitions,
+                     int initialState,
+                     int finalState,
+                     IList<Tag> tags)
         {
             this.transitions = transitions;
             this.epsilonTransitions = epsilonTransitions;
@@ -40,26 +44,27 @@ namespace CodeHive.DfaLex.tree
             }
         }
 
-        internal IList<Transition> AvailableTransitionsFor(State q, InputRange ir)
+        internal IList<Transition> AvailableTransitionsFor(int q, InputRange ir)
         {
             return transitions.TryGetValue((q, ir), out var ret) ? ret : new List<Transition>();
         }
 
-        internal IList<Transition> AvailableEpsilonTransitionsFor(State q)
+        internal IList<Transition> AvailableEpsilonTransitionsFor(int q)
         {
             return epsilonTransitions.TryGetValue(q, out var ret) ? ret : new List<Transition>();
         }
 
         public override string ToString() => $"{initialState} -> {finalState}, {transitions.AsString()}, {epsilonTransitions.AsString()}";
 
-        internal class Builder : INfaBuilder<State>
+        internal class Builder : INfaBuilder
         {
-            private readonly IDictionary<(State, InputRange), IList<Transition>> inputTransitions   = new Dictionary<(State, InputRange), IList<Transition>>();
-            private readonly IDictionary<State, IList<Transition>>               epsilonTransitions = new Dictionary<State, IList<Transition>>();
-            private readonly IList<Tag>                                          tags               = new List<Tag>();
-            private          State                                               initialState;
-            private          State                                               finalState;
-            private readonly SortedSet<InputRange>                               allInputRanges;
+            private readonly IDictionary<(int, InputRange), IList<Transition>> inputTransitions   = new Dictionary<(int, InputRange), IList<Transition>>();
+            private readonly IDictionary<int, IList<Transition>>               epsilonTransitions = new Dictionary<int, IList<Transition>>();
+            private readonly IList<Tag>                                        tags               = new List<Tag>();
+            private          int                                               initialState;
+            private          int                                               finalState;
+            private readonly SortedSet<InputRange>                             allInputRanges;
+            private          int                                               currentState = -1;
 
             public Builder(IEnumerable<InputRange> allInputRanges)
             {
@@ -69,12 +74,12 @@ namespace CodeHive.DfaLex.tree
 
             public CaptureGroup.Maker CaptureGroupMaker { get; } = new CaptureGroup.Maker();
 
-            public State AddState()
+            public int AddState()
             {
-                return new State();
+                return Interlocked.Increment(ref currentState);
             }
 
-            public void AddTransition(State from, State to, char firstChar, char lastChar)
+            public void AddTransition(int from, int to, char firstChar, char lastChar)
             {
                 var lower = InputRange.Make(firstChar);
                 var upper = InputRange.Make(lastChar);
@@ -91,7 +96,7 @@ namespace CodeHive.DfaLex.tree
                 }
             }
 
-            public void AddEpsilon(State from, State to, NfaTransitionPriority priority, Tag tag)
+            public void AddEpsilon(int from, int to, NfaTransitionPriority priority, Tag tag)
             {
                 if (!epsilonTransitions.TryGetValue(from, out var transitions))
                 {
@@ -102,12 +107,12 @@ namespace CodeHive.DfaLex.tree
                 transitions.Add(new Transition(to, priority, tag));
             }
 
-            public State MakeInitialState()
+            public int MakeInitialState()
             {
-                return initialState = new State();
+                return initialState = AddState();
             }
 
-            public void SetAsFinal(State state)
+            public void SetAsFinal(int state)
             {
                 finalState = state;
             }

@@ -20,7 +20,7 @@ namespace CodeHive.DfaLex.Tests
         internal static string Print(TNfa tnfa, bool useStateNumbers = false)
         {
             var ctx = new TNfaContext(tnfa, useStateNumbers);
-            var printer = new CompactPrinter<State, int>(ctx);
+            var printer = new CompactPrinter<int, int>(ctx);
 
             return printer.Print();
         }
@@ -52,7 +52,7 @@ namespace CodeHive.DfaLex.Tests
         internal static string PrintDot(TNfa tnfa, bool useStateNumbers = false)
         {
             var ctx = new TNfaContext(tnfa, useStateNumbers);
-            var printer = new DotPrinter<State, int>(ctx, "tnfa");
+            var printer = new DotPrinter<int, int>(ctx, "tnfa");
 
             return printer.Print();
         }
@@ -326,7 +326,7 @@ namespace CodeHive.DfaLex.Tests
             }
         }
 
-        private class TNfaContext : Context<State, int>
+        private class TNfaContext : Context<int, int>
         {
             private readonly TNfa tnfa;
 
@@ -337,9 +337,9 @@ namespace CodeHive.DfaLex.Tests
                 StartStates = new[] {tnfa.initialState};
             }
 
-            protected override int GetStateNumber(State state) => state.Id;
+            protected override int GetStateNumber(int state) => state;
 
-            public override bool HasIncomingEpsilon(State target)
+            public override bool HasIncomingEpsilon(int target)
             {
                 foreach (var transitions in tnfa.epsilonTransitions.Values)
                 {
@@ -352,11 +352,11 @@ namespace CodeHive.DfaLex.Tests
                 return false;
             }
 
-            public override bool IsAccepting(State state) => state.Equals(tnfa.finalState);
+            public override bool IsAccepting(int state) => state.Equals(tnfa.finalState);
 
-            public override int GetMatch(State state) => 0;
+            public override int GetMatch(int state) => 0;
 
-            public override State GetNextState(State state, char ch)
+            public override int GetNextState(int state, char ch)
             {
                 foreach (var ((next, range), transitions) in tnfa.transitions)
                 {
@@ -366,10 +366,10 @@ namespace CodeHive.DfaLex.Tests
                     }
                 }
 
-                return null;
+                throw new InvalidOperationException($"No transition from {StateName(state)} on '{ch}'");
             }
 
-            public override void ForTransitions(State state, Action empty, Action<State, bool, Tag> epsilon, Action<State, char, char, bool> transition)
+            public override void ForTransitions(int state, Action empty, Action<int, bool, Tag> epsilon, Action<int, char, char, bool> transition)
             {
                 var ft = tnfa.transitions.Keys.Where((s, _) => s.state.Equals(state));
                 var t = ft.Aggregate(false, (current, f) => current || tnfa.transitions[f].Any());

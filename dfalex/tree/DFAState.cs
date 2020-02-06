@@ -32,7 +32,7 @@ namespace CodeHive.DfaLex.tree
 
             // concatenate both parts.
             var ret = new byte[firstPart.Length + secondPart.Length];
-            Array.Copy(firstPart, 0, ret, 0, firstPart.Length);
+            Array.Copy(firstPart,  0, ret, 0,                firstPart.Length);
             Array.Copy(secondPart, 0, ret, firstPart.Length, secondPart.Length);
             return ret;
         }
@@ -43,7 +43,7 @@ namespace CodeHive.DfaLex.tree
             using var writer = new BinaryWriter(stream);
             foreach (var t in threads)
             {
-                writer.Write(t.State.Id);
+                writer.Write(t.State);
             }
 
             var hash = MakeMessageDigest();

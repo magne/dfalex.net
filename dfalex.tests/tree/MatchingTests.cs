@@ -11,7 +11,6 @@ namespace CodeHive.DfaLex.Tests.tree
         public MatchingTests(ITestOutputHelper helper)
             : base(helper)
         {
-            State.ResetCount();
             History.ResetCount();
         }
 

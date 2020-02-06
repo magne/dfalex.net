@@ -37,12 +37,11 @@ namespace CodeHive.DfaLex
         /// <param name="nfa">NFA builder to add to.</param>
         /// <param name="targetState">target state after the pattern is matched</param>
         /// <param name="captureGroup">current capture group</param>
-        /// <typeparam name="TState">The type of the NFA states.</typeparam>
         /// <returns>a state that transitions to <paramref name="targetState"/> after matching the pattern, and only after
         /// matching the pattern. This may be <paramref name="targetState"/> if the pattern is an empty string.</returns>
-        TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup);
+        int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup);
 
-        TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup);
+        int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup);
 
         /// <returns><c>true</c> if this pattern matches the empty string</returns>
         bool MatchesEmpty { get; }

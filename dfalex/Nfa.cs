@@ -29,7 +29,7 @@ namespace CodeHive.DfaLex
     /// <typeparam name="TResult">The type of result produced by matching a pattern.</typeparam>
     public class Nfa<TResult>
     {
-        public class Builder : INfaBuilder<int>
+        public class Builder : INfaBuilder
         {
             private readonly CaptureGroup.Maker        captureGroupMaker = new CaptureGroup.Maker();
             private readonly List<List<NfaTransition>> stateTransitions  = new List<List<NfaTransition>>();
@@ -301,11 +301,11 @@ namespace CodeHive.DfaLex
         }
     }
 
-    public interface INfaBuilder<TState>
+    public interface INfaBuilder
     {
-        TState AddState();
-        void AddTransition(TState from, TState to, char firstChar, char lastChar);
-        void AddEpsilon(TState from, TState to, NfaTransitionPriority priority, Tag tag);
+        int AddState();
+        void AddTransition(int from, int to, char firstChar, char lastChar);
+        void AddEpsilon(int from, int to, NfaTransitionPriority priority, Tag tag);
         CaptureGroup MakeCaptureGroup(CaptureGroup parent);
     }
 }

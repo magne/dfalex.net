@@ -140,7 +140,7 @@ namespace CodeHive.DfaLex
             }
         }
 
-        public TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+        public int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
         {
             var startState = nfa.AddState();
             for (var i = 0; i < bounds.Length; i += 2)
@@ -162,7 +162,7 @@ namespace CodeHive.DfaLex
             return startState;
         }
 
-        public TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+        public int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
         {
             var targetState = nfa.AddState();
             for (var i = 0; i < bounds.Length; i += 2)

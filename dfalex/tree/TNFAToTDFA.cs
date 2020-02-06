@@ -22,10 +22,10 @@ namespace CodeHive.DfaLex.tree
         }
 
         // Used to create the initial state of the DFA.
-        internal List<RThread> ConvertToDfaState(State state)
+        internal List<RThread> ConvertToDfaState(int state)
         {
             var initialMemoryLocations = Arraylike.Make(tnfa.AllTags.Count);
-            return new List<RThread> {new RThread(state, initialMemoryLocations)};
+            return new List<RThread> { new RThread(state, initialMemoryLocations) };
         }
 
         internal class StateAndInstructions
@@ -74,7 +74,7 @@ namespace CodeHive.DfaLex.tree
         internal StateAndInstructions oneStep(IList<RThread> threads, InputRange ir)
         {
             var newInner = new List<RThread>();
-            ISet<State> seen = new HashSet<State>();
+            ISet<int> seen = new HashSet<int>();
             var instructions = new List<Instruction>();
 
             var stack = new Stack<TransitioningThread>(); // normal priority
@@ -116,7 +116,8 @@ namespace CodeHive.DfaLex.tree
                     {
                         // push new thread with the new state that isn't consuming to high.
                         stack.Push(new TransitioningThread(new RThread(transition.State, tt.thread.Histories),
-                            Hunger.FED, new List<Instruction>()));
+                                                           Hunger.FED,
+                                                           new List<Instruction>()));
                     }
 
                     continue;

@@ -2,13 +2,13 @@ namespace CodeHive.DfaLex.tree
 {
     internal class RThread
     {
-        internal RThread(State state, Arraylike histories)
+        internal RThread(int state, Arraylike histories)
         {
             State = state;
             Histories = histories;
         }
 
-        public State State { get; }
+        public int State { get; }
 
         public Arraylike Histories { get; }
 

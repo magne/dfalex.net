@@ -621,9 +621,9 @@ namespace CodeHive.DfaLex
             return Then(Group(pattern));
         }
 
-        public abstract TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup);
+        public abstract int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup);
 
-        public abstract TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup);
+        public abstract int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup);
 
         public abstract bool MatchesEmpty { get; }
 
@@ -669,14 +669,14 @@ namespace CodeHive.DfaLex
                 MatchesEmpty = first.MatchesEmpty && then.MatchesEmpty;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 targetState = then.AddToNfa(nfa, targetState, captureGroup);
                 targetState = first.AddToNfa(nfa, targetState, captureGroup);
                 return targetState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 startState = first.AddToNfaF(nfa, startState, captureGroup);
                 startState = then.AddToNfaF(nfa, startState, captureGroup);
@@ -697,7 +697,7 @@ namespace CodeHive.DfaLex
             }
 
             // TODO remove when we get rid of InputRange
-            public override IEnumerable<IMatchable> Children => new[] {first, then};
+            public override IEnumerable<IMatchable> Children => new[] { first, then };
         }
 
         [Serializable]
@@ -710,12 +710,12 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 return tomatch.AddToNfa(nfa, targetState, captureGroup);
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 return tomatch.AddToNfaF(nfa, startState, captureGroup);
             }
@@ -741,18 +741,18 @@ namespace CodeHive.DfaLex
             }
 
             // TODO remove when we get rid of InputRange
-            public override IEnumerable<IMatchable> Children => new[] {tomatch};
+            public override IEnumerable<IMatchable> Children => new[] { tomatch };
         }
 
         [Serializable]
         private class EmptyPattern : Pattern
         {
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 return targetState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 return startState;
             }
@@ -791,7 +791,7 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 for (var i = tomatch.Length - 1; i >= 0; --i)
                 {
@@ -804,7 +804,7 @@ namespace CodeHive.DfaLex
                 return targetState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 foreach (var ch in tomatch)
                 {
@@ -850,7 +850,7 @@ namespace CodeHive.DfaLex
                 this.tomatch = tomatch;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 for (var i = tomatch.Length - 1; i >= 0; --i)
                 {
@@ -874,7 +874,7 @@ namespace CodeHive.DfaLex
                 return targetState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 foreach (var ch in tomatch)
                 {
@@ -935,7 +935,7 @@ namespace CodeHive.DfaLex
                 this.lazy = lazy;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 var repState = nfa.AddState();
                 nfa.AddEpsilon(repState, targetState, lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
@@ -953,7 +953,7 @@ namespace CodeHive.DfaLex
                 return skipState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 // TODO Enable optimization?
                 var endState = nfa.AddState();
@@ -970,8 +970,8 @@ namespace CodeHive.DfaLex
                     nfa.AddEpsilon(startState, endState,  lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
                     nfa.AddEpsilon(startState, skipState, lazy ? NfaTransitionPriority.Low : NfaTransitionPriority.Normal, Tag.None);
                     var repState = pattern.AddToNfaF(nfa, skipState, captureGroup);
-                    nfa.AddEpsilon(repState, endState,   lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low,    Tag.None);
-                    nfa.AddEpsilon(repState, startState, NfaTransitionPriority.Normal, Tag.None);
+                    nfa.AddEpsilon(repState, endState,   lazy ? NfaTransitionPriority.Normal : NfaTransitionPriority.Low, Tag.None);
+                    nfa.AddEpsilon(repState, startState, NfaTransitionPriority.Normal,                                    Tag.None);
                 }
 
                 return endState;
@@ -998,7 +998,7 @@ namespace CodeHive.DfaLex
             }
 
             // TODO remove when we get rid of InputRange
-            public override IEnumerable<IMatchable> Children => new[] {pattern};
+            public override IEnumerable<IMatchable> Children => new[] { pattern };
         }
 
         [Serializable]
@@ -1013,7 +1013,7 @@ namespace CodeHive.DfaLex
                 this.lazy = lazy;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 var startState = pattern.AddToNfa(nfa, targetState, captureGroup);
                 if (pattern.MatchesEmpty)
@@ -1027,7 +1027,7 @@ namespace CodeHive.DfaLex
                 return skipState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 // TODO Enable optimization?
                 // if (pattern.MatchesEmpty)
@@ -1063,7 +1063,7 @@ namespace CodeHive.DfaLex
             }
 
             // TODO remove when we get rid of InputRange
-            public override IEnumerable<IMatchable> Children => new[] {pattern};
+            public override IEnumerable<IMatchable> Children => new[] { pattern };
         }
 
         [Serializable]
@@ -1076,7 +1076,7 @@ namespace CodeHive.DfaLex
                 this.pattern = pattern;
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup parentCaptureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup parentCaptureGroup)
             {
                 var cg = nfa.MakeCaptureGroup(parentCaptureGroup);
 
@@ -1090,7 +1090,7 @@ namespace CodeHive.DfaLex
                 return startState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup parentCaptureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup parentCaptureGroup)
             {
                 var cg = nfa.MakeCaptureGroup(parentCaptureGroup);
 
@@ -1122,7 +1122,7 @@ namespace CodeHive.DfaLex
             }
 
             // TODO remove when we get rid of InputRange
-            public override IEnumerable<IMatchable> Children => new[] {pattern};
+            public override IEnumerable<IMatchable> Children => new[] { pattern };
         }
 
         [Serializable]
@@ -1148,7 +1148,7 @@ namespace CodeHive.DfaLex
                 Array.Copy(choices, this.choices, choices.Length);
             }
 
-            public override TState AddToNfa<TState>(INfaBuilder<TState> nfa, TState targetState, CaptureGroup captureGroup)
+            public override int AddToNfa(INfaBuilder nfa, int targetState, CaptureGroup captureGroup)
             {
                 if (choices.Length == 0)
                 {
@@ -1177,7 +1177,7 @@ namespace CodeHive.DfaLex
                 return startState;
             }
 
-            public override TState AddToNfaF<TState>(INfaBuilder<TState> nfa, TState startState, CaptureGroup captureGroup)
+            public override int AddToNfaF(INfaBuilder nfa, int startState, CaptureGroup captureGroup)
             {
                 if (choices.Length == 0)
                 {

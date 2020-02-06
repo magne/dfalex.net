@@ -2,14 +2,14 @@ namespace CodeHive.DfaLex.tree
 {
     internal class Transition
     {
-        internal Transition(State state, NfaTransitionPriority priority, Tag tag)
+        internal Transition(int state, NfaTransitionPriority priority, Tag tag)
         {
             State = state;
             Priority = priority;
             Tag = tag;
         }
 
-        internal State State { get; }
+        internal int State { get; }
 
         internal NfaTransitionPriority Priority { get; }
 
