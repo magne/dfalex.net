@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using CodeHive.DfaLex.tree;
 using FluentAssertions;
 using Xunit;

@@ -38,9 +38,9 @@ namespace CodeHive.DfaLex
         public int State { get; }
 
         /// <summary>
-        /// The priority of this transition.
+        /// The tag of this transition.
         /// </summary>
-        public NfaTransitionPriority Priority { get; }
+        public Tag Tag { get; }
 
         /// <summary>
         /// Creates a new immutable NFA transtition.
@@ -48,13 +48,13 @@ namespace CodeHive.DfaLex
         /// <param name="firstChar">The first character that triggers this transition.</param>
         /// <param name="lastChar">The last character that triggers this transition.</param>
         /// <param name="state">The target state of this transition.</param>
-        /// <param name="priority">The priority of this transition.</param>
-        public NfaTransition(char firstChar, char lastChar, int state, NfaTransitionPriority priority)
+        /// <param name="tag">The tag of this transition.</param>
+        public NfaTransition(char firstChar, char lastChar, int state, Tag tag)
         {
             FirstChar = firstChar;
             LastChar = lastChar;
             State = state;
-            Priority = priority;
+            Tag = tag;
         }
 
         public override bool Equals(object obj)
@@ -66,7 +66,7 @@ namespace CodeHive.DfaLex
 
             if (obj is NfaTransition t)
             {
-                return FirstChar == t.FirstChar && LastChar == t.LastChar && State == t.State && Priority == t.Priority;
+                return FirstChar == t.FirstChar && LastChar == t.LastChar && State == t.State && Tag.Equals(t.Tag);
             }
 
             return false;
@@ -78,7 +78,7 @@ namespace CodeHive.DfaLex
             hash = (hash ^ FirstChar) * 16777619;
             hash = (hash ^ LastChar) * 16777619;
             hash = (hash ^ State) * 16777619;
-            hash = (hash ^ (int) Priority) * 16777619;
+            hash = (hash ^ Tag.GetHashCode()) * 16777619;
             return hash ^ (hash >> 16);
         }
     }

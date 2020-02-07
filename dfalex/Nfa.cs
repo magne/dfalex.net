@@ -34,7 +34,6 @@ namespace CodeHive.DfaLex
             private readonly CaptureGroup.Maker        captureGroupMaker = new CaptureGroup.Maker();
             private readonly List<List<NfaTransition>> stateTransitions  = new List<List<NfaTransition>>();
             private readonly List<List<NfaEpsilon>>    stateEpsilons     = new List<List<NfaEpsilon>>();
-            private readonly IList<Tag>                tags              = new List<Tag>();
 
             private readonly List<(bool accepting, TResult accepts)> stateAccepts = new List<(bool, TResult)>();
 
@@ -89,7 +88,7 @@ namespace CodeHive.DfaLex
                     stateTransitions[from] = list;
                 }
 
-                list.Add(new NfaTransition(firstChar, lastChar, to, NfaTransitionPriority.Normal));
+                list.Add(new NfaTransition(firstChar, lastChar, to, Tag.None));
             }
 
             /// <summary>
@@ -108,7 +107,7 @@ namespace CodeHive.DfaLex
                     stateEpsilons[from] = list;
                 }
 
-                list.Add(new NfaEpsilon(to, priority));
+                list.Add(new NfaEpsilon(to, priority, tag));
             }
 
 
@@ -133,13 +132,13 @@ namespace CodeHive.DfaLex
                 for (var i = 0; i < reachable.Count; ++i)
                 {
                     ForStateEpsilons(reachable[i],
-                                     trans =>
-                                     {
-                                         if (checkSet.Add(trans.State))
-                                         {
-                                             reachable.Add(trans.State);
-                                         }
-                                     });
+                        trans =>
+                        {
+                            if (checkSet.Add(trans.State))
+                            {
+                                reachable.Add(trans.State);
+                            }
+                        });
                 }
 
                 //if none of them accept, then we're done
@@ -162,13 +161,13 @@ namespace CodeHive.DfaLex
                 foreach (var src in reachable)
                 {
                     ForStateTransitions(src,
-                                        trans =>
-                                        {
-                                            if (transSet.Add(trans))
-                                            {
-                                                AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
-                                            }
-                                        });
+                        trans =>
+                        {
+                            if (transSet.Add(trans))
+                            {
+                                AddTransition(newState, trans.State, trans.FirstChar, trans.LastChar);
+                            }
+                        });
                 }
 
                 return newState;
@@ -176,17 +175,7 @@ namespace CodeHive.DfaLex
 
             public CaptureGroup MakeCaptureGroup(CaptureGroup parent)
             {
-                var cg = captureGroupMaker.Next(parent);
-                RegisterCaptureGroup(cg);
-                return cg;
-            }
-
-            public void RegisterCaptureGroup(CaptureGroup cg)
-            {
-                // TODO Enable again when Nfa handles capture groups (or we convert regex left to right instead of right to left)
-                //Debug.Assert(tags.Count / 2 == cg.Number);
-                tags.Add(cg.StartTag);
-                tags.Add(cg.EndTag);
+                return captureGroupMaker.Next(parent);
             }
 
             public Nfa<TResult> Build()
@@ -250,7 +239,7 @@ namespace CodeHive.DfaLex
         /// Get the result attached to the given state
         /// </summary>
         /// <param name="state">the state number</param>
-        /// <returns>the result that was provided to <see cref="INfaBuilder{TResult}.AddState()"/> when the state was created</returns>
+        /// <returns>the result that was provided to <see cref="INfaBuilder.AddState()"/> when the state was created</returns>
         public TResult GetAccept(int state)
         {
             return stateAccepts[state].accepts;

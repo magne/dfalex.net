@@ -32,14 +32,21 @@ namespace CodeHive.DfaLex
         public NfaTransitionPriority Priority { get; }
 
         /// <summary>
+        /// The tag of this transition.
+        /// </summary>
+        public Tag Tag { get; }
+
+        /// <summary>
         /// Creates a new immutable NFA transtition.
         /// </summary>
         /// <param name="state">The target state of this transition.</param>
         /// <param name="priority">The priority of this transition.</param>
-        public NfaEpsilon(int state, NfaTransitionPriority priority)
+        /// <param name="tag">The tag of this transition.</param>
+        public NfaEpsilon(int state, NfaTransitionPriority priority, Tag tag)
         {
             State = state;
             Priority = priority;
+            Tag = tag;
         }
 
         public override bool Equals(object obj)
@@ -51,7 +58,7 @@ namespace CodeHive.DfaLex
 
             if (obj is NfaEpsilon t)
             {
-                return State == t.State && Priority == t.Priority;
+                return State == t.State && Priority == t.Priority && Tag.Equals(t.Tag);
             }
 
             return false;
@@ -62,6 +69,7 @@ namespace CodeHive.DfaLex
             var hash = unchecked((int) 2166136261L);
             hash = (hash ^ State) * 16777619;
             hash = (hash ^ (int) Priority) * 16777619;
+            hash = (hash ^ Tag.GetHashCode()) * 16777619;
             return hash ^ (hash >> 16);
         }
     }

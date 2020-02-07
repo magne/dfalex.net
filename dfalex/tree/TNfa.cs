@@ -1,110 +1,113 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 
 namespace CodeHive.DfaLex.tree
 {
     // ReSharper disable once InconsistentNaming
     internal class TNfa
     {
-        internal readonly IDictionary<(int state, InputRange range), IList<Transition>> transitions;
-        internal readonly IDictionary<int, IList<Transition>>                           epsilonTransitions;
-        internal readonly int                                                           initialState;
-        internal readonly int                                                           finalState;
-        private readonly  IList<Tag>                                                    tags;
+        private readonly  IList<NfaTransition>[] stateTransitions;
+        internal readonly IList<NfaEpsilon>[]    stateEpsilons;
+        internal readonly int                    initialState;
+        internal readonly int                    finalState;
 
-        private TNfa(IDictionary<(int, InputRange), IList<Transition>> transitions,
-                     IDictionary<int, IList<Transition>> epsilonTransitions,
-                     int initialState,
-                     int finalState,
-                     IList<Tag> tags)
+        private TNfa(IList<IList<NfaTransition>> stateTransitions,
+            IList<IList<NfaEpsilon>> stateEpsilons,
+            int initialState,
+            int finalState)
         {
-            this.transitions = transitions;
-            this.epsilonTransitions = epsilonTransitions;
+            this.stateTransitions = stateTransitions.ToArray();
+            this.stateEpsilons = stateEpsilons.ToArray();
             this.initialState = initialState;
             this.finalState = finalState;
-            this.tags = tags;
+            AllInputRanges = FindAllInputRanges();
+            AllTags = FindAllTags();
         }
 
-        internal IList<InputRange> AllInputRanges => transitions.Keys.Select(key => key.range).ToList();
+        internal IEnumerable<InputRange> AllInputRanges { get; }
 
-        internal ISet<Tag> AllTags
+        internal ISet<Tag> AllTags { get; }
+
+        internal IEnumerable<NfaTransition> AvailableTransitionsFor(int q, InputRange range)
         {
-            get
-            {
-                var ret = new HashSet<Tag>();
-                var all = transitions.Values.Concat(epsilonTransitions.Values).ToList();
-                foreach (var tag in from triples in all from triple in triples select triple.Tag into tag where tag.IsStartTag || tag.IsEndTag select tag)
-                {
-                    ret.Add(tag);
-                }
-
-                return ret;
-            }
+            return stateTransitions[q]?.Where(transition => transition.FirstChar == range.From && transition.LastChar == range.To) ?? Enumerable.Empty<NfaTransition>();
         }
 
-        internal IList<Transition> AvailableTransitionsFor(int q, InputRange ir)
+        internal IEnumerable<NfaEpsilon> AvailableEpsilonTransitionsFor(int q)
         {
-            return transitions.TryGetValue((q, ir), out var ret) ? ret : new List<Transition>();
+            return stateEpsilons[q] ?? Enumerable.Empty<NfaEpsilon>();
         }
 
-        internal IList<Transition> AvailableEpsilonTransitionsFor(int q)
+        public IEnumerable<NfaEpsilon> GetStateEpsilons(int state) => stateEpsilons[state] ?? Enumerable.Empty<NfaEpsilon>();
+
+        public IEnumerable<NfaTransition> GetStateTransitions(int state) => stateTransitions[state] ?? Enumerable.Empty<NfaTransition>();
+
+        public override string ToString() => $"{initialState} -> {finalState}, {stateTransitions.AsString()}, {stateEpsilons.AsString()}";
+
+        private IEnumerable<InputRange> FindAllInputRanges()
         {
-            return epsilonTransitions.TryGetValue(q, out var ret) ? ret : new List<Transition>();
+            return stateTransitions.Where(list => list != null).SelectMany(list => list).Select(transition => InputRange.Make(transition.FirstChar, transition.LastChar)).ToList();
         }
 
-        public override string ToString() => $"{initialState} -> {finalState}, {transitions.AsString()}, {epsilonTransitions.AsString()}";
+        private ISet<Tag> FindAllTags()
+        {
+            var tags = stateTransitions.Where(list => list != null).SelectMany(list => list).Select(transition => transition.Tag);
+            tags = tags.Concat(stateEpsilons.Where(list => list != null).SelectMany(list => list).Select(transition => transition.Tag));
+            return new HashSet<Tag>(tags.Where(tag => tag.IsStartTag || tag.IsEndTag));
+        }
 
         internal class Builder : INfaBuilder
         {
-            private readonly IDictionary<(int, InputRange), IList<Transition>> inputTransitions   = new Dictionary<(int, InputRange), IList<Transition>>();
-            private readonly IDictionary<int, IList<Transition>>               epsilonTransitions = new Dictionary<int, IList<Transition>>();
-            private readonly IList<Tag>                                        tags               = new List<Tag>();
-            private          int                                               initialState;
-            private          int                                               finalState;
-            private readonly SortedSet<InputRange>                             allInputRanges;
-            private          int                                               currentState = -1;
+            private readonly IList<IList<NfaTransition>> stateTransitions = new List<IList<NfaTransition>>();
+            private readonly IList<IList<NfaEpsilon>>    stateEpsilons    = new List<IList<NfaEpsilon>>();
+            private          int                         initialState;
+            private          int                         finalState;
+            private readonly SortedSet<InputRange>       allInputRanges;
 
             public Builder(IEnumerable<InputRange> allInputRanges)
             {
                 this.allInputRanges = new SortedSet<InputRange>(InputRangeCleanup.CleanUp(allInputRanges));
-                RegisterCaptureGroup(CaptureGroupMaker.EntireMatch);
             }
 
             public CaptureGroup.Maker CaptureGroupMaker { get; } = new CaptureGroup.Maker();
 
             public int AddState()
             {
-                return Interlocked.Increment(ref currentState);
+                var state = stateTransitions.Count;
+                stateTransitions.Add(null);
+                stateEpsilons.Add(null);
+                return state;
             }
 
             public void AddTransition(int from, int to, char firstChar, char lastChar)
             {
                 var lower = InputRange.Make(firstChar);
                 var upper = InputRange.Make(lastChar);
-                var overlappedRanges = allInputRanges.GetViewBetween(lower, upper);
-                foreach (var key in overlappedRanges.Select(ir => (from, ir)))
-                {
-                    if (!inputTransitions.TryGetValue(key, out var transitions))
-                    {
-                        transitions = new List<Transition>();
-                        inputTransitions[key] = transitions;
-                    }
 
-                    transitions.Add(new Transition(to, NfaTransitionPriority.Normal, Tag.None));
+                var transitions = stateTransitions[from];
+                if (transitions == null)
+                {
+                    transitions = new List<NfaTransition>();
+                    stateTransitions[from] = transitions;
+                }
+
+                var overlappedRanges = allInputRanges.GetViewBetween(lower, upper);
+                foreach (var range in overlappedRanges)
+                {
+                    transitions.Add(new NfaTransition(range.From, range.To, to, Tag.None));
                 }
             }
 
             public void AddEpsilon(int from, int to, NfaTransitionPriority priority, Tag tag)
             {
-                if (!epsilonTransitions.TryGetValue(from, out var transitions))
+                var transitions = stateEpsilons[from];
+                if (transitions == null)
                 {
-                    transitions = new List<Transition>();
-                    epsilonTransitions[from] = transitions;
+                    transitions = new List<NfaEpsilon>();
+                    stateEpsilons[from] = transitions;
                 }
 
-                transitions.Add(new Transition(to, priority, tag));
+                transitions.Add(new NfaEpsilon(to, priority, tag));
             }
 
             public int MakeInitialState()
@@ -119,21 +122,12 @@ namespace CodeHive.DfaLex.tree
 
             public CaptureGroup MakeCaptureGroup(CaptureGroup parent)
             {
-                var cg = CaptureGroupMaker.Next(parent);
-                RegisterCaptureGroup(cg);
-                return cg;
-            }
-
-            public void RegisterCaptureGroup(CaptureGroup cg)
-            {
-                Debug.Assert(tags.Count / 2 == cg.Number);
-                tags.Add(cg.StartTag);
-                tags.Add(cg.EndTag);
+                return CaptureGroupMaker.Next(parent);
             }
 
             public TNfa Build()
             {
-                return new TNfa(inputTransitions, epsilonTransitions, initialState, finalState, tags);
+                return new TNfa(stateTransitions, stateEpsilons, initialState, finalState);
             }
         }
     }

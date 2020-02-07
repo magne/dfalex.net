@@ -4,7 +4,7 @@ namespace CodeHive.DfaLex.tree
 {
     /// <summary>
     /// <see cref="InputRange"/> represents a range of <see cref="char"/> which can be used in
-    /// <see cref="TransitionTable"/> of TDFA.
+    /// <see cref="TDFATransitionTable"/> of TDFA.
     /// </summary>
     internal abstract class InputRange : IComparable<InputRange>
     {
@@ -85,13 +85,6 @@ namespace CodeHive.DfaLex.tree
             { }
 
             public override string ToString() => "$";
-        }
-
-        private class SpecialInputRange : RealInputRange
-        {
-            private SpecialInputRange(char from, char to)
-                : base(from, to)
-            { }
         }
 
         private class RealInputRange : InputRange

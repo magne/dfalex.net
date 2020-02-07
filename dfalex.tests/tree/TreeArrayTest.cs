@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using CodeHive.DfaLex.tree;
 using FluentAssertions;
 using Xunit;
