@@ -11,11 +11,11 @@ namespace CodeHive.DfaLex.tree
         private readonly int size;
 
         // The following vars are, together a struct of arrays.
-        private readonly char[]          froms;
-        private readonly Instruction[][] instructions;
-        private readonly int[]           newStates;
-        private readonly int[]           states;
-        private readonly char[]          tos;
+        internal readonly char[]          froms;
+        private readonly  Instruction[][] instructions;
+        internal readonly int[]           newStates;
+        internal readonly int[]           states;
+        internal readonly char[]          tos;
 
         // Position of the last hit in the transition table.
         private int last;
@@ -45,7 +45,7 @@ namespace CodeHive.DfaLex.tree
         internal class NextDFAState
         {
             internal readonly Instruction[] instructions;
-            public readonly DFAState      nextState;
+            public readonly   DFAState      nextState;
 
             internal NextDFAState(Instruction[] instructions, DFAState nextState)
             {
@@ -62,7 +62,7 @@ namespace CodeHive.DfaLex.tree
         internal class Builder
         {
             internal readonly Mapping          mapping     = new Mapping();
-            private readonly SortedSet<Entry> transitions = new SortedSet<Entry>();
+            private readonly  SortedSet<Entry> transitions = new SortedSet<Entry>();
 
             internal class Entry : IComparable<Entry>
             {
@@ -99,7 +99,7 @@ namespace CodeHive.DfaLex.tree
                         return cmp;
                     }
 
-                    return from.CompareTo((char)(other.from + compareOffset));
+                    return from.CompareTo((char) (other.from + compareOffset));
                 }
 
                 public Entry MakeInclusiveUpper()

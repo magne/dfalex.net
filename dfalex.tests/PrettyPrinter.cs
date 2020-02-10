@@ -25,6 +25,14 @@ namespace CodeHive.DfaLex.Tests
             return printer.Print();
         }
 
+        internal static string Print(TNfa tnfa, TDFATransitionTable transitionTable, bool useStateNumbers = false)
+        {
+            var ctx = new TDFAContext(tnfa, transitionTable, useStateNumbers);
+            var printer = new CompactPrinter<int, int>(ctx);
+
+            return printer.Print();
+        }
+
         internal static string Print<T>(RawDfa<T> dfa, bool useStatefulNumbers = false)
         {
             var ctx = new RawDfaContext<T>(dfa, useStatefulNumbers);
@@ -53,6 +61,14 @@ namespace CodeHive.DfaLex.Tests
         {
             var ctx = new TNfaContext(tnfa, useStateNumbers);
             var printer = new DotPrinter<int, int>(ctx, "tnfa");
+
+            return printer.Print();
+        }
+
+        internal static string PrintDot(TNfa tnfa, TDFATransitionTable transitionTable, bool useStateNumbers = false)
+        {
+            var ctx = new TDFAContext(tnfa, transitionTable, useStateNumbers);
+            var printer = new DotPrinter<int, int>(ctx, "tdfa");
 
             return printer.Print();
         }
@@ -382,6 +398,62 @@ namespace CodeHive.DfaLex.Tests
                         foreach (var trans in tnfa.GetStateTransitions(state))
                         {
                             transition(trans.State, trans.FirstChar, trans.LastChar, trans.Tag);
+                        }
+                    }
+                }
+            }
+        }
+
+        private class TDFAContext : Context<int, int>
+        {
+            private readonly TNfa tnfa;
+            private readonly TDFATransitionTable transitionTable;
+
+            public TDFAContext(TNfa tnfa, TDFATransitionTable transitionTable, bool useStateNumbers)
+                : base(useStateNumbers)
+            {
+                this.tnfa = tnfa;
+                this.transitionTable = transitionTable;
+                StartStates = new[] {tnfa.initialState};
+            }
+
+            protected override int GetStateNumber(int state) => state;
+
+            public override bool HasIncomingEpsilon(int target) => false;
+
+            public override bool IsAccepting(int state) => transitionTable.states.All(t => t != state);
+
+            public override int GetMatch(int state) => 1;
+
+            public override int GetNextState(int state, char ch)
+            {
+                for (var i = 0; i < transitionTable.states.Length; ++i)
+                {
+                    if (transitionTable.states[i] == state && transitionTable.froms[i] <= ch && ch <= transitionTable.tos[i])
+                    {
+                        return transitionTable.newStates[i];
+                    }
+                }
+
+                throw new InvalidOperationException($"No transition from {StateName(state)} on '{ch}'");
+            }
+
+            public override void ForTransitions(int state, Action empty, Action<int, bool, Tag> epsilon, Action<int, char, char, Tag> transition)
+            {
+                if (!transitionTable.states.Contains(state))
+                {
+                    empty?.Invoke();
+                }
+                else
+                {
+                    if (transition != null)
+                    {
+                        for (var i = 0; i < transitionTable.states.Length; ++i)
+                        {
+                            if (transitionTable.states[i] == state)
+                            {
+                                transition(transitionTable.newStates[i], transitionTable.froms[i], transitionTable.tos[i], Tag.None);
+                            }
                         }
                     }
                 }

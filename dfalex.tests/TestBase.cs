@@ -66,6 +66,12 @@ namespace CodeHive.DfaLex.Tests
             CheckStates(have, resource, doStdout);
         }
 
+        internal void CheckTNfa(TNfa tnfa, TDFATransitionTable transitionTable, string resource, bool doStdout = false)
+        {
+            var have = PrettyPrinter.Print(tnfa, transitionTable);
+            CheckStates(have, resource, doStdout);
+        }
+
         internal void CheckDfa<T>(RawDfa<T> dfa, string resource, bool doStdout = false)
         {
             var have = PrettyPrinter.Print(dfa);
@@ -97,6 +103,11 @@ namespace CodeHive.DfaLex.Tests
         internal void PrintDot(TNfa tnfa)
         {
             helper.WriteLine(PrettyPrinter.PrintDot(tnfa));
+        }
+
+        internal void PrintDot(TNfa tnfa, TDFATransitionTable transitionTable)
+        {
+            helper.WriteLine(PrettyPrinter.PrintDot(tnfa, transitionTable));
         }
 
         internal void PrintDot<T>(DfaState<T> start)

@@ -14,8 +14,9 @@ namespace CodeHive.DfaLex.tree
 
         private readonly SortedSet<DFAState> states = new SortedSet<DFAState>();
 
-        internal readonly TDFATransitionTable.Builder tdfaBuilder = new TDFATransitionTable.Builder();
-        private readonly TNFAToTDFA                  tnfa2tdfa;
+        internal readonly TDFATransitionTable.Builder     tdfaBuilder = new TDFATransitionTable.Builder();
+        private readonly  TNFAToTDFA                      tnfa2tdfa;
+        private           TNFAToTDFA.StateAndInstructions startState;
 
         internal TDFAInterpreter(TNFAToTDFA tnfa2tdfa)
         {
@@ -59,17 +60,22 @@ namespace CodeHive.DfaLex.tree
         public MatchResultTree interpret(string input)
         {
             var inputRanges = InputRangeCleanup.CleanUp(tnfa2tdfa.tnfa.AllInputRanges);
-            var startUnexpanded = tnfa2tdfa.ConvertToDfaState(tnfa2tdfa.tnfa.initialState);
-            var startState = tnfa2tdfa.oneStep(startUnexpanded, null);
+            if (startState == null)
+            {
+                var startUnexpanded = tnfa2tdfa.ConvertToDfaState(tnfa2tdfa.tnfa.initialState);
+                startState = tnfa2tdfa.oneStep(startUnexpanded, null);
+
+                states.Add(startState.dfaState);
+            }
 
             var dfaState = startState.dfaState;
-            states.Add(dfaState);
 
             var cacheHits = 0;
             TDFATransitionTable tdfa = null;
             var tdfaState = -1;
 
-            foreach (var instruction in startState.instructions) {
+            foreach (var instruction in startState.instructions)
+            {
                 instruction.Execute(-1);
             }
 
@@ -85,9 +91,11 @@ namespace CodeHive.DfaLex.tree
                     tdfa.NewStateAndInstructions(tdfaState, a, newState);
                     if (newState.found)
                     {
-                        foreach (var i in newState.instructions) {
+                        foreach (var i in newState.instructions)
+                        {
                             i.Execute(pos);
                         }
+
                         tdfaState = newState.nextState;
                         continue;
                     }
@@ -103,7 +111,8 @@ namespace CodeHive.DfaLex.tree
                     var nextState = tdfaBuilder.AvailableTransition(dfaState, a);
                     if (nextState != null)
                     {
-                        foreach (var i in nextState.instructions) {
+                        foreach (var i in nextState.instructions)
+                        {
                             i.Execute(pos);
                         }
 
@@ -157,7 +166,8 @@ namespace CodeHive.DfaLex.tree
                     c.AddRange(mappingInstructions);
                 }
 
-                foreach (Instruction instruction in c) {
+                foreach (Instruction instruction in c)
+                {
                     instruction.Execute(pos);
                 }
 
