@@ -1,0 +1,9 @@
+<Project>
+
+  <ItemGroup Condition=" ! $(AssemblyName.Endswith('.tests')) ">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>
