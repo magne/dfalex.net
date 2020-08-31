@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+[Bb]in/
+[Oo]bj/
+TestResults/
+BenchmarkDotNet.Artifacts/
+
+*.DotSettings.user
+
+Thumbs.db
+Desktop.ini
+.DS_Store
