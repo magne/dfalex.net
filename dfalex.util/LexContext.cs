@@ -6,6 +6,13 @@ using System.Text;
 
 namespace dfalex.util
 {
+    /// <summary>
+    /// Represents a location in the input source.
+    /// </summary>
+    /// <param name="Line">The one based line number</param>
+    /// <param name="Column">The one based column number</param>
+    /// <param name="Position">The zero based position</param>
+    /// <param name="Source">The file or URL</param>
     public sealed record Location(int Line, int Column, long Position, object? Source)
     {
         public override string ToString()
@@ -21,8 +28,17 @@ namespace dfalex.util
         }
     }
 
+    /// <summary>
+    /// Represents an exception encountered while lexing or parsing from an input source.
+    /// </summary>
     public class ExpectingException : Exception
     {
+        /// <summary>
+        /// Creates a new <see cref="ExpectingException" />
+        /// </summary>
+        /// <param name="message">The error message - this will be appended with the location information</param>
+        /// <param name="location">The location where the exception occured</param>
+        /// <param name="expecting">A list of expected symbols or characters</param>
         public ExpectingException(string message, Location location, params string[] expecting)
             : base(GetMessage(message, location))
         {
@@ -30,46 +46,86 @@ namespace dfalex.util
             Expecting = expecting;
         }
 
+        /// <summary>
+        /// Indicates the location where the exception occured
+        /// </summary>
         public Location Location { get; }
 
-        public int Line => Location.Line;
-
-        public int Column => Location.Column;
-
-        public long Position => Location.Position;
-
+        /// <summary>
+        /// Indicates a list of expecting characters or symbols
+        /// </summary>
         public string[] Expecting { get; }
 
-        private static string? GetMessage(string message, Location location)
+        private static string GetMessage(string message, Location location)
         {
             return new StringBuilder().Append(message).Append(" at ").Append(location).ToString();
         }
     }
 
+    /// <summary>
+    /// Provides error reporting, location tracking, lifetime and start/end management over an input cursor.
+    /// </summary>
     public abstract partial class LexContext : IDisposable
     {
+        /// <summary>
+        /// Indicates the default tab width of an input device
+        /// </summary>
         public const int     DefaultTabWidth = 4;
+
+        /// <summary>
+        /// Represents the end of input symbol
+        /// </summary>
         public const int     EndOfInput      = -1;
+
+        /// <summary>
+        /// Represents the before input symbol
+        /// </summary>
         public const int     BeforeInput     = -2;
+
+        /// <summary>
+        /// Represents a symbol for the disposed state
+        /// </summary>
         public const int     Disposed        = -3;
+
         private      int     current         = BeforeInput;
         private      int     line;
         private      int     column;
         private      long    position;
         private      string? fileOrUrl;
 
+        /// <summary>
+        /// Indicates the tab width of the input device
+        /// </summary>
         public int TabWidth { get; set; } = DefaultTabWidth;
 
+        /// <summary>
+        /// Indicates the current one based line number
+        /// </summary>
         public int Line => line;
 
+        /// <summary>
+        /// Indicates the current one based column number
+        /// </summary>
         public int Column => column;
 
+        /// <summary>
+        /// Indicates the current zero based position
+        /// </summary>
         public long Position => position;
 
+        /// <summary>
+        /// Indicates the current filename or URL, if any could be discerned
+        /// </summary>
         public string? FileOrUrl => fileOrUrl;
 
+        /// <summary>
+        /// Provides access to the capture buffer, a <see cref="StringBuilder" />
+        /// </summary>
         public StringBuilder CaptureBuffer { get; } = new();
 
+        /// <summary>
+        /// Gets the current character under the cursor or <see cref="BeforeInput"/>, <see cref="EndOfInput" />, or <see cref="Disposed" />
+        /// </summary>
         public int Current => current;
 
         internal LexContext()
@@ -84,11 +140,21 @@ namespace dfalex.util
             Close();
         }
 
+        /// <summary>
+        /// Creates a <see cref="LexContext" /> over an enumeration of characters, which can be a string, character array, or other source
+        /// </summary>
+        /// <param name="input">The input characters</param>
+        /// <returns>A new <see cref="LexContext" /> over the input</returns>
         public static LexContext Create(IEnumerable<char> input)
         {
             return new CharEnumeratorContext(input);
         }
 
+        /// <summary>
+        /// Creates a <see cref="LexContext" /> over a <see cref="TextReader"/>
+        /// </summary>
+        /// <param name="input">The input reader</param>
+        /// <returns>A new <see cref="LexContext" /> over the input</returns>
         public static LexContext CreateFrom(TextReader input)
         {
             // try to get a filename off the text reader
@@ -112,11 +178,21 @@ namespace dfalex.util
             return result;
         }
 
+        /// <summary>
+        /// Creates a <see cref="LexContext" /> over a file
+        /// </summary>
+        /// <param name="filename">The file</param>
+        /// <returns>A new <see cref="LexContext" /> over the file</returns>
         public static LexContext CreateFrom(string filename)
         {
             return CreateFrom(new StreamReader(filename));
         }
 
+        /// <summary>
+        /// Creates a <see cref="LexContext" /> over an URL
+        /// </summary>
+        /// <param name="url">The URL</param>
+        /// <returns>A new <see cref="LexContext" /> over the URL</returns>
         public static LexContext CreateFromUrl(string url)
         {
             var wreq = WebRequest.Create(url);
@@ -126,6 +202,9 @@ namespace dfalex.util
             return result;
         }
 
+        /// <summary>
+        /// Closes the current instance and releases any resources being held
+        /// </summary>
         private void Close()
         {
             if (current != Disposed)
@@ -137,6 +216,13 @@ namespace dfalex.util
             }
         }
 
+        /// <summary>
+        /// Sets the location information for this instance
+        /// </summary>
+        /// <param name="line">The one based line number</param>
+        /// <param name="column">The one based column number</param>
+        /// <param name="position">The zero based position</param>
+        /// <param name="fileOrUrl">The file or URL</param>
         public void SetLocation(int line, int column, long position, string fileOrUrl)
         {
             this.line = line;
@@ -145,6 +231,12 @@ namespace dfalex.util
             this.fileOrUrl = fileOrUrl;
         }
 
+        /// <summary>
+        /// Gets all or a subset of the current capture buffer
+        /// </summary>
+        /// <param name="startIndex">The start index</param>
+        /// <param name="length">The number of characters to retrieve, or zero to retrieve the remainder of the buffer</param>
+        /// <returns>A string containing the specified subset of the capture buffer</returns>
         public string GetCapture(int startIndex = 0, int length = 0)
         {
             _CheckDisposed();
@@ -156,12 +248,18 @@ namespace dfalex.util
             return CaptureBuffer.ToString(startIndex, length);
         }
 
+        /// <summary>
+        /// Clears the capture buffer
+        /// </summary>
         public void ClearCapture()
         {
             _CheckDisposed();
             CaptureBuffer.Clear();
         }
 
+        /// <summary>
+        /// Captures the current character under the cursor, if any
+        /// </summary>
         public void Capture()
         {
             _CheckDisposed();
@@ -171,6 +269,11 @@ namespace dfalex.util
             }
         }
 
+        /// <summary>
+        /// Verifies that one of the specified characters is under the input cursor. If it isn't, a <see cref="ExpectingException" /> is raised.
+        /// </summary>
+        /// <param name="expecting">The list of expected characters. If empty, anything but end of input is accepted. If <see cref="EndOfInput" /> is included, end of input is accepted.</param>
+        [System.Diagnostics.DebuggerHidden()]
         public void Expecting(params int[] expecting)
         {
             _CheckDisposed();
