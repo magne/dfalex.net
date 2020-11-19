@@ -1,43 +1,167 @@
 using System;
+using System.Text;
 
 namespace dfalex.util
 {
-    public partial class LexContext
+    public static class LexContextBasic
     {
         /// <summary>
-        /// Attempts to read whitespace from the current input, capturing it
+        /// Verifies that one of the specified characters is under the input cursor. If it isn't, a <see cref="ExpectingException" /> is raised.
+        /// </summary>
+        /// <param name="expecting">The list of expected characters. If empty, anything but end of input is accepted. If <see cref="LexContext.EndOfInput" /> is included, end of input is accepted.</param>
+        [System.Diagnostics.DebuggerHidden()]
+        public static void Expecting(this LexContext lc, params int[] expecting)
+        {
+            lc.CheckDisposed();
+            if (lc.Current == LexContext.BeforeInput)
+            {
+                throw new ExpectingException("The cursor is before the beginning of the input", lc.Location);
+            }
+
+            switch (expecting.Length)
+            {
+                case 0:
+                    if (lc.Current == LexContext.EndOfInput)
+                    {
+                        throw new ExpectingException("Unexpected end of input", lc.Location);
+                    }
+
+                    break;
+
+                case 1:
+                    if (lc.Current != expecting[0])
+                    {
+                        throw new ExpectingException(_GetErrorMessage(lc, expecting), lc.Location, _GetErrorExpecting(expecting));
+                    }
+
+                    break;
+
+                default:
+                    if (Array.IndexOf(expecting, lc.Current) < 0)
+                    {
+                        throw new ExpectingException(_GetErrorMessage(lc, expecting), lc.Location, _GetErrorExpecting(expecting));
+                    }
+
+                    break;
+            }
+        }
+
+        private static string _GetErrorMessage(LexContext lc, int[] expecting)
+        {
+            StringBuilder sb;
+            switch (expecting.Length)
+            {
+                case 0:
+                    if (lc.Current == LexContext.EndOfInput)
+                    {
+                        return "Unexpected end of input";
+                    }
+                    return string.Concat("Unexpected character \"", (char) lc.Current, "\" in input");
+
+                case 1:
+                    sb = new StringBuilder()
+                        .AppendExpectedChar(expecting[0]);
+                    break;
+
+                case 2:
+                    sb = new StringBuilder()
+                         .AppendExpectedChar(expecting[0])
+                         .Append(" or ")
+                         .AppendExpectedChar(expecting[1]);
+                    break;
+
+                default: // length > 2
+                    sb = new StringBuilder()
+                        .AppendExpectedChar(expecting[0]);
+                    var l = expecting.Length - 1;
+                    for (var i = 1; i < l; ++i)
+                    {
+                        sb.Append(", ").AppendExpectedChar(expecting[i]);
+                    }
+
+                    sb.Append(", or ").AppendExpectedChar(expecting[^1]);
+                    break;
+            }
+
+            if (lc.Current == LexContext.EndOfInput)
+            {
+                return string.Concat("Unexpected end of input. Expecting ", sb.ToString());
+            }
+
+            if (expecting.Length == 0)
+            {
+                return string.Concat("Unexpected character \"", (char) lc.Current, "\" in input");
+            }
+
+            return string.Concat("Unexpected character \"", (char) lc.Current, "\" in input. Expecting ", sb.ToString());
+        }
+
+        private static StringBuilder AppendExpectedChar(this StringBuilder sb, int expecting)
+        {
+            if (expecting == LexContext.EndOfInput)
+            {
+                sb.Append("end of input");
+            }
+            else
+            {
+                sb.Append('"').Append((char) expecting).Append('"');
+            }
+
+            return sb;
+        }
+
+        private static string[] _GetErrorExpecting(int[] expecting)
+        {
+            var result = new string[expecting.Length];
+            for (var i = 0; i < expecting.Length; ++i)
+            {
+                if (expecting[i] != LexContext.EndOfInput)
+                {
+                    result[i] = Convert.ToString(expecting[i]);
+                }
+                else
+                {
+                    result[i] = "end of input";
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Attempts to read whitespace from the lc.Current input, capturing it
         /// </summary>
         /// <returns>True if whitespace was read, otherwise false</returns>
-        public bool TryReadWhiteSpace()
+        public static bool TryReadWhiteSpace(this LexContext lc)
         {
-            EnsureStarted();
-            if (-1 == Current || !char.IsWhiteSpace((char) Current))
+            lc.EnsureStarted();
+            if (-1 == lc.Current || !char.IsWhiteSpace((char) lc.Current))
             {
                 return false;
             }
 
-            Capture();
-            while (-1 != Advance() && char.IsWhiteSpace((char) Current))
+            lc.Capture();
+            while (-1 != lc.Advance() && char.IsWhiteSpace((char) lc.Current))
             {
-                Capture();
+                lc.Capture();
             }
 
             return true;
         }
 
         /// <summary>
-        /// Attempts to skip whitespace in the current input without capturing it
+        /// Attempts to skip whitespace in the lc.Current input without capturing it
         /// </summary>
         /// <returns>True if whitespace was skipped, otherwise false</returns>
-        public bool TrySkipWhiteSpace()
+        public static bool TrySkipWhiteSpace(this LexContext lc)
         {
-            EnsureStarted();
-            if (-1 == Current || !char.IsWhiteSpace((char) Current))
+            lc.EnsureStarted();
+            if (-1 == lc.Current || !char.IsWhiteSpace((char) lc.Current))
             {
                 return false;
             }
 
-            while (-1 != Advance() && char.IsWhiteSpace((char) Current))
+            while (-1 != lc.Advance() && char.IsWhiteSpace((char) lc.Current))
             { }
 
             return true;
@@ -49,32 +173,32 @@ namespace dfalex.util
         /// <param name="character">The character to halt at</param>
         /// <param name="readCharacter">True if the character should be consumed, otherwise false</param>
         /// <returns>True if the character was found, otherwise false</returns>
-        public bool TryReadUntil(int character, bool readCharacter = true)
+        public static bool TryReadUntil(this LexContext lc, int character, bool readCharacter = true)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (0 > character)
             {
                 character = -1;
             }
 
-            Capture();
-            if (Current == character)
+            lc.Capture();
+            if (lc.Current == character)
             {
                 return true;
             }
 
-            while (-1 != Advance() && Current != character)
+            while (-1 != lc.Advance() && lc.Current != character)
             {
-                Capture();
+                lc.Capture();
             }
 
             //
-            if (Current == character)
+            if (lc.Current == character)
             {
                 if (readCharacter)
                 {
-                    Capture();
-                    Advance();
+                    lc.Capture();
+                    lc.Advance();
                 }
 
                 return true;
@@ -89,27 +213,27 @@ namespace dfalex.util
         /// <param name="character">The character to halt at</param>
         /// <param name="skipCharacter">True if the character should be consumed, otherwise false</param>
         /// <returns>True if the character was found, otherwise false</returns>
-        public bool TrySkipUntil(int character, bool skipCharacter = true)
+        public static bool TrySkipUntil(this LexContext lc, int character, bool skipCharacter = true)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (0 > character)
             {
                 character = -1;
             }
 
-            if (Current == character)
+            if (lc.Current == character)
             {
                 return true;
             }
 
-            while (-1 != Advance() && Current != character)
+            while (-1 != lc.Advance() && lc.Current != character)
             { }
 
-            if (Current == character)
+            if (lc.Current == character)
             {
                 if (skipCharacter)
                 {
-                    Advance();
+                    lc.Advance();
                 }
 
                 return true;
@@ -125,25 +249,25 @@ namespace dfalex.util
         /// <param name="escapeChar">The escape indicator character to use</param>
         /// <param name="readCharacter">True if the character should be consumed, otherwise false</param>
         /// <returns>True if the character was found, otherwise false</returns>
-        public bool TryReadUntil(int character, int escapeChar, bool readCharacter = true)
+        public static bool TryReadUntil(this LexContext lc, int character, int escapeChar, bool readCharacter = true)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (0 > character)
             {
                 character = -1;
             }
 
-            if (-1 == Current)
+            if (-1 == lc.Current)
             {
                 return false;
             }
 
-            if (Current == character)
+            if (lc.Current == character)
             {
                 if (readCharacter)
                 {
-                    Capture();
-                    Advance();
+                    lc.Capture();
+                    lc.Advance();
                 }
 
                 return true;
@@ -151,32 +275,32 @@ namespace dfalex.util
 
             do
             {
-                if (escapeChar == Current)
+                if (escapeChar == lc.Current)
                 {
-                    Capture();
-                    if (-1 == Advance())
+                    lc.Capture();
+                    if (-1 == lc.Advance())
                     {
                         return false;
                     }
 
-                    Capture();
+                    lc.Capture();
                 }
                 else
                 {
-                    if (character == Current)
+                    if (character == lc.Current)
                     {
                         if (readCharacter)
                         {
-                            Capture();
-                            Advance();
+                            lc.Capture();
+                            lc.Advance();
                         }
 
                         return true;
                     }
 
-                    Capture();
+                    lc.Capture();
                 }
-            } while (-1 != Advance());
+            } while (-1 != lc.Advance());
 
             return false;
         }
@@ -188,35 +312,35 @@ namespace dfalex.util
         /// <param name="escapeChar">The escape indicator character to use</param>
         /// <param name="skipCharacter">True if the character should be consumed, otherwise false</param>
         /// <returns>True if the character was found, otherwise false</returns>
-        public bool TrySkipUntil(int character, int escapeChar, bool skipCharacter = true)
+        public static bool TrySkipUntil(this LexContext lc, int character, int escapeChar, bool skipCharacter = true)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (0 > character)
             {
                 character = -1;
             }
 
-            if (Current == character)
+            if (lc.Current == character)
             {
                 return true;
             }
 
-            while (-1 != Advance() && Current != character)
+            while (-1 != lc.Advance() && lc.Current != character)
             {
                 if (character == escapeChar)
                 {
-                    if (-1 == Advance())
+                    if (-1 == lc.Advance())
                     {
                         break;
                     }
                 }
             }
 
-            if (Current == character)
+            if (lc.Current == character)
             {
                 if (skipCharacter)
                 {
-                    Advance();
+                    lc.Advance();
                 }
 
                 return true;
@@ -244,34 +368,34 @@ namespace dfalex.util
         /// <param name="readCharacter">True if the character should be consumed, otherwise false</param>
         /// <param name="anyOf">A list of characters that signal the end of the scan</param>
         /// <returns>True if one of the characters was found, otherwise false</returns>
-        public bool TryReadUntil(bool readCharacter = true, params char[]? anyOf)
+        public static bool TryReadUntil(this LexContext lc, bool readCharacter = true, params char[]? anyOf)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             anyOf ??= Array.Empty<char>();
 
-            Capture();
-            if (-1 != Current && _ContainsChar(anyOf, (char) Current))
+            lc.Capture();
+            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (readCharacter)
                 {
-                    Capture();
-                    Advance();
+                    lc.Capture();
+                    lc.Advance();
                 }
 
                 return true;
             }
 
-            while (-1 != Advance() && !_ContainsChar(anyOf, (char) Current))
+            while (-1 != lc.Advance() && !_ContainsChar(anyOf, (char) lc.Current))
             {
-                Capture();
+                lc.Capture();
             }
 
-            if (-1 != Current && _ContainsChar(anyOf, (char) Current))
+            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (readCharacter)
                 {
-                    Capture();
-                    Advance();
+                    lc.Capture();
+                    lc.Advance();
                 }
 
                 return true;
@@ -286,29 +410,29 @@ namespace dfalex.util
         /// <param name="skipCharacter">True if the character should be consumed, otherwise false</param>
         /// <param name="anyOf">A list of characters that signal the end of the scan</param>
         /// <returns>True if one of the characters was found, otherwise false</returns>
-        public bool TrySkipUntil(bool skipCharacter = true, params char[]? anyOf)
+        public static bool TrySkipUntil(this LexContext lc, bool skipCharacter = true, params char[]? anyOf)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             anyOf ??= Array.Empty<char>();
 
-            if (-1 != Current && _ContainsChar(anyOf, (char) Current))
+            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (skipCharacter)
                 {
-                    Advance();
+                    lc.Advance();
                 }
 
                 return true;
             }
 
-            while (-1 != Advance() && !_ContainsChar(anyOf, (char) Current))
+            while (-1 != lc.Advance() && !_ContainsChar(anyOf, (char) lc.Current))
             { }
 
-            if (-1 != Current && _ContainsChar(anyOf, (char) Current))
+            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (skipCharacter)
                 {
-                    Advance();
+                    lc.Advance();
                 }
 
                 return true;
@@ -322,31 +446,31 @@ namespace dfalex.util
         /// </summary>
         /// <param name="text">The text to read until</param>
         /// <returns>True if the text was found, otherwise false</returns>
-        public bool TryReadUntil(string text)
+        public static bool TryReadUntil(this LexContext lc, string text)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (string.IsNullOrEmpty(text))
             {
                 return false;
             }
 
-            while (-1 != Current && TryReadUntil(text[0], false))
+            while (-1 != lc.Current && TryReadUntil(lc, text[0], false))
             {
                 var found = true;
                 for (var i = 1; i < text.Length; ++i)
                 {
-                    if (Advance() != text[i])
+                    if (lc.Advance() != text[i])
                     {
                         found = false;
                         break;
                     }
 
-                    Capture();
+                    lc.Capture();
                 }
 
                 if (found)
                 {
-                    Advance();
+                    lc.Advance();
                     return true;
                 }
             }
@@ -359,20 +483,20 @@ namespace dfalex.util
         /// </summary>
         /// <param name="text">The text to skip until</param>
         /// <returns>True if the text was found, otherwise false</returns>
-        public bool TrySkipUntil(string text)
+        public static bool TrySkipUntil(this LexContext lc, string text)
         {
-            EnsureStarted();
+            lc.EnsureStarted();
             if (string.IsNullOrEmpty(text))
             {
                 return false;
             }
 
-            while (-1 != Current && TrySkipUntil(text[0], false))
+            while (-1 != lc.Current && TrySkipUntil(lc, text[0], false))
             {
                 var found = true;
                 for (var i = 1; i < text.Length; ++i)
                 {
-                    if (Advance() != text[i])
+                    if (lc.Advance() != text[i])
                     {
                         found = false;
                         break;
@@ -381,7 +505,7 @@ namespace dfalex.util
 
                 if (found)
                 {
-                    Advance();
+                    lc.Advance();
                     return true;
                 }
             }
