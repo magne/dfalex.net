@@ -87,11 +87,19 @@ namespace dfalex.util
         /// </summary>
         public const int Disposed = -3;
 
-        private int     current = BeforeInput;
-        private int     line;
-        private int     column;
-        private long    position;
-        private string? fileOrUrl;
+        private int current = BeforeInput;
+
+        // Indicates the current one based line number
+        private int line;
+
+        // Indicates the current one based column number
+        private int column;
+
+        // Indicates the current zero based position
+        private long position;
+
+        // Indicates the current filename or URL, if any could be discerned
+        private object? fileOrUrl;
 
         /// <summary>
         /// Indicates the tab width of the input device
@@ -99,24 +107,13 @@ namespace dfalex.util
         public int TabWidth { get; set; } = DefaultTabWidth;
 
         /// <summary>
-        /// Indicates the current one based line number
+        /// The location information for this instance.
         /// </summary>
-        public int Line => line;
-
-        /// <summary>
-        /// Indicates the current one based column number
-        /// </summary>
-        public int Column => column;
-
-        /// <summary>
-        /// Indicates the current zero based position
-        /// </summary>
-        public long Position => position;
-
-        /// <summary>
-        /// Indicates the current filename or URL, if any could be discerned
-        /// </summary>
-        public string? FileOrUrl => fileOrUrl;
+        public Location Location
+        {
+            get => new(line, column, position, fileOrUrl);
+            set => (line, column, position, fileOrUrl) = value;
+        }
 
         /// <summary>
         /// Provides access to the capture buffer, a <see cref="StringBuilder" />
@@ -127,8 +124,6 @@ namespace dfalex.util
         /// Gets the current character under the cursor or <see cref="BeforeInput"/>, <see cref="EndOfInput" />, or <see cref="Disposed" />
         /// </summary>
         public int Current => current;
-
-        public Location Location => new(line, column, position, fileOrUrl);
 
         internal LexContext()
         {
@@ -189,15 +184,11 @@ namespace dfalex.util
         public static LexContext CreateFrom(TextReader input)
         {
             // try to get a filename off the text reader
-            string fn = null;
+            string? fn = null;
             var sr = input as StreamReader;
-            if (null != sr)
+            if (sr?.BaseStream is FileStream fstm)
             {
-                var fstm = sr.BaseStream as FileStream;
-                if (null != fstm)
-                {
-                    fn = fstm.Name;
-                }
+                fn = fstm.Name;
             }
 
             var result = new TextReaderLexContext(input);
@@ -231,21 +222,6 @@ namespace dfalex.util
             var result = CreateFrom(new StreamReader(wrsp.GetResponseStream()));
             result.fileOrUrl = url;
             return result;
-        }
-
-        /// <summary>
-        /// Sets the location information for this instance
-        /// </summary>
-        /// <param name="line">The one based line number</param>
-        /// <param name="column">The one based column number</param>
-        /// <param name="position">The zero based position</param>
-        /// <param name="fileOrUrl">The file or URL</param>
-        public void SetLocation(int line, int column, long position, string fileOrUrl)
-        {
-            this.line = line;
-            this.column = column;
-            this.position = position;
-            this.fileOrUrl = fileOrUrl;
         }
 
         /// <summary>
