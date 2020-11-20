@@ -67,6 +67,15 @@ namespace dfalex.util
     /// </summary>
     public abstract class LexContext : IDisposable
     {
+        private enum State
+        {
+            BeforeInput,
+            EndOfInput,
+            Disposed
+        }
+
+        private State state;
+
         /// <summary>
         /// Indicates the default tab width of an input device
         /// </summary>
@@ -75,17 +84,17 @@ namespace dfalex.util
         /// <summary>
         /// Represents the end of input symbol
         /// </summary>
-        public const int EndOfInput = -1;
+        private const int EndOfInput = -1;
 
         /// <summary>
         /// Represents the before input symbol
         /// </summary>
-        public const int BeforeInput = -2;
+        private const int BeforeInput = -2;
 
         /// <summary>
         /// Represents a symbol for the disposed state
         /// </summary>
-        public const int Disposed = -3;
+        private const int Disposed = -3;
 
         private int current = BeforeInput;
 
@@ -125,6 +134,12 @@ namespace dfalex.util
         /// </summary>
         public int Current => current;
 
+        public bool IsBeforeInput => current == BeforeInput;
+
+        public bool IsEndOfInput => current == EndOfInput;
+
+        protected bool IsDisposed => current == Disposed;
+
         internal LexContext()
         {
             line = 1;
@@ -145,7 +160,7 @@ namespace dfalex.util
 
         protected virtual void Dispose(bool disposing)
         {
-            if (current != Disposed)
+            if (!IsDisposed)
             {
                 // Release unmanaged resources
                 if (disposing)
@@ -311,7 +326,7 @@ namespace dfalex.util
 
         internal void CheckDisposed()
         {
-            if (current == Disposed)
+            if (IsDisposed)
             {
                 throw new ObjectDisposedException(nameof(LexContext));
             }
@@ -327,7 +342,7 @@ namespace dfalex.util
 
             protected override void Dispose(bool disposing)
             {
-                if (current != Disposed && disposing)
+                if (!IsDisposed && disposing)
                 {
                     inner.Dispose();
                 }
@@ -346,7 +361,7 @@ namespace dfalex.util
 
             protected override void Dispose(bool disposing)
             {
-                if (current != Disposed && disposing)
+                if (!IsDisposed && disposing)
                 {
                     inner.Dispose();
                 }

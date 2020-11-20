@@ -13,7 +13,7 @@ namespace dfalex.util
         public static void Expecting(this LexContext lc, params int[] expecting)
         {
             lc.CheckDisposed();
-            if (lc.Current == LexContext.BeforeInput)
+            if (lc.IsBeforeInput)
             {
                 throw new ExpectingException("The cursor is before the beginning of the input", lc.Location);
             }
@@ -21,7 +21,7 @@ namespace dfalex.util
             switch (expecting.Length)
             {
                 case 0:
-                    if (lc.Current == LexContext.EndOfInput)
+                    if (lc.IsEndOfInput)
                     {
                         throw new ExpectingException("Unexpected end of input", lc.Location);
                     }
@@ -52,7 +52,7 @@ namespace dfalex.util
             switch (expecting.Length)
             {
                 case 0:
-                    if (lc.Current == LexContext.EndOfInput)
+                    if (lc.IsEndOfInput)
                     {
                         return "Unexpected end of input";
                     }
@@ -83,7 +83,7 @@ namespace dfalex.util
                     break;
             }
 
-            if (lc.Current == LexContext.EndOfInput)
+            if (lc.IsEndOfInput)
             {
                 return string.Concat("Unexpected end of input. Expecting ", sb.ToString());
             }
@@ -98,7 +98,7 @@ namespace dfalex.util
 
         private static StringBuilder AppendExpectedChar(this StringBuilder sb, int expecting)
         {
-            if (expecting == LexContext.EndOfInput)
+            if (expecting == -1)
             {
                 sb.Append("end of input");
             }
@@ -115,7 +115,7 @@ namespace dfalex.util
             var result = new string[expecting.Length];
             for (var i = 0; i < expecting.Length; ++i)
             {
-                if (expecting[i] != LexContext.EndOfInput)
+                if (expecting[i] != -1)
                 {
                     result[i] = Convert.ToString(expecting[i]);
                 }
@@ -511,6 +511,29 @@ namespace dfalex.util
             }
 
             return false;
+        }
+
+        public static bool TryReadUntilEndOfInput(this LexContext lc)
+        {
+            lc.EnsureStarted();
+            while (!lc.IsEndOfInput)
+            {
+                lc.Advance();
+                lc.Capture();
+            }
+
+            return true;
+        }
+
+        public static bool TrySkipUntilEndOfInput(this LexContext lc)
+        {
+            lc.EnsureStarted();
+            while (!lc.IsEndOfInput)
+            {
+                lc.Advance();
+            }
+
+            return true;
         }
     }
 }
