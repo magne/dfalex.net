@@ -129,11 +129,6 @@ namespace dfalex.util
         /// </summary>
         public StringBuilder CaptureBuffer { get; } = new();
 
-        /// <summary>
-        /// Gets the current character under the cursor or <see cref="BeforeInput"/>, <see cref="EndOfInput" />, or <see cref="Disposed" />
-        /// </summary>
-        public int Current => current;
-
         public bool IsBeforeInput => current == BeforeInput;
 
         public bool IsEndOfInput => current == EndOfInput;
@@ -179,6 +174,70 @@ namespace dfalex.util
         public void Close()
         {
             Dispose();
+        }
+
+        /// <summary>
+        /// Gets the current character under the cursor or <see cref="BeforeInput"/>, <see cref="EndOfInput" />, or <see cref="Disposed" />
+        /// </summary>
+        public int Current
+        {
+            get
+            {
+                if (IsBeforeInput)
+                {
+                    throw new InvalidOperationException("Enumeration has not started. Call MoveNext.");
+                }
+
+                if (IsEndOfInput)
+                {
+                    throw new InvalidOperationException("Enumeration already finished.");
+                }
+
+                return current;
+            }
+        }
+
+        public bool MoveNext()
+        {
+            CheckDisposed();
+            if (IsEndOfInput)
+            {
+                return false;
+            }
+
+            current = AdvanceInner();
+            if (IsEndOfInput)
+            {
+                return false;
+            }
+
+            switch (current)
+            {
+                case '\n':
+                    ++line;
+                    column = 0;
+                    break;
+                case '\r':
+                    column = 0;
+                    break;
+                case '\t':
+                    column += TabWidth - (column % TabWidth);
+                    break;
+                default:
+                    // since we have to advance to read the second surrogate
+                    // we don't increment the column on the first surrogate
+                    // and surrogate pairs should only change the column
+                    // by one anyway.
+                    if (!char.IsHighSurrogate(unchecked((char) current)))
+                    {
+                        ++column;
+                    }
+
+                    break;
+            }
+
+            ++position;
+            return true;
         }
 
         /// <summary>
@@ -275,53 +334,6 @@ namespace dfalex.util
             {
                 CaptureBuffer.Append((char) current);
             }
-        }
-
-        public void EnsureStarted()
-        {
-            CheckDisposed();
-            if (current == BeforeInput)
-            {
-                Advance();
-            }
-        }
-
-        public int Advance()
-        {
-            CheckDisposed();
-            if (current == EndOfInput)
-            {
-                return EndOfInput;
-            }
-
-            current = AdvanceInner();
-            switch (current)
-            {
-                case '\n':
-                    ++line;
-                    column = 0;
-                    break;
-                case '\r':
-                    column = 0;
-                    break;
-                case '\t':
-                    column += TabWidth;
-                    break;
-                default:
-                    // since we have to advance to read the second surrogate
-                    // we don't increment the column on the first surrogate
-                    // and surrogate pairs should only change the column
-                    // by one anyway.
-                    if (!char.IsHighSurrogate(unchecked((char) current)))
-                    {
-                        ++column;
-                    }
-
-                    break;
-            }
-
-            ++position;
-            return current;
         }
 
         internal void CheckDisposed()

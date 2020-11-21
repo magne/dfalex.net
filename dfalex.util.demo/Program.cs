@@ -46,7 +46,7 @@ namespace dfalex.util.demo
             var result = new Dictionary<string, object>();
             pc.TrySkipWhiteSpace();
             pc.Expecting('{');
-            pc.Advance();
+            pc.MoveNext();
             pc.Expecting(); // expecting anything other than end of input
             while ('}' != pc.Current && -1 != pc.Current) // loop until } or end
             {
@@ -58,19 +58,22 @@ namespace dfalex.util.demo
                 var fn = _ParseJsonValue(pc);
                 pc.TrySkipWhiteSpace();
                 pc.Expecting(':');
-                pc.Advance();
+                pc.MoveNext();
                 // add the next value to the dictionary
                 result.Add(fn, _ParseJson(pc));
                 pc.TrySkipWhiteSpace();
                 pc.Expecting('}', ',');
                 // skip commas
-                if (',' == pc.Current) pc.Advance();
+                if (',' == pc.Current)
+                {
+                    pc.MoveNext();
+                }
             }
 
             // make sure we're positioned on the end
             pc.Expecting('}');
             // ... and read past it
-            pc.Advance();
+            pc.MoveNext();
             return result;
         }
 
@@ -80,7 +83,7 @@ namespace dfalex.util.demo
             var result = new List<object>();
             pc.TrySkipWhiteSpace();
             pc.Expecting('[');
-            pc.Advance();
+            pc.MoveNext();
             pc.Expecting(); // expect anything but end of input
             // loop until end of array or input
             while (-1 != pc.Current && ']' != pc.Current)
@@ -91,13 +94,16 @@ namespace dfalex.util.demo
                 pc.TrySkipWhiteSpace();
                 pc.Expecting(']', ',');
                 // skip the comma
-                if (',' == pc.Current) pc.Advance();
+                if (',' == pc.Current)
+                {
+                    pc.MoveNext();
+                }
             }
 
             // ensure we're on the final position
             pc.Expecting(']');
             // .. and read past it
-            pc.Advance();
+            pc.MoveNext();
             return result;
         }
 
@@ -112,7 +118,7 @@ namespace dfalex.util.demo
             if ('\"' == pc.Current)
             {
                 pc.Capture();
-                pc.Advance();
+                pc.MoveNext();
                 // reads until it finds a quote
                 // using \ as an escape character
                 // and consuming the final quote

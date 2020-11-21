@@ -5,6 +5,15 @@ namespace dfalex.util
 {
     public static class LexContextBasic
     {
+        public static void EnsureStarted(this LexContext lc)
+        {
+            lc.CheckDisposed();
+            if (lc.IsBeforeInput)
+            {
+                lc.MoveNext();
+            }
+        }
+
         /// <summary>
         /// Verifies that one of the specified characters is under the input cursor. If it isn't, a <see cref="ExpectingException" /> is raised.
         /// </summary>
@@ -135,13 +144,13 @@ namespace dfalex.util
         public static bool TryReadWhiteSpace(this LexContext lc)
         {
             lc.EnsureStarted();
-            if (-1 == lc.Current || !char.IsWhiteSpace((char) lc.Current))
+            if (lc.IsEndOfInput || !char.IsWhiteSpace((char) lc.Current))
             {
                 return false;
             }
 
             lc.Capture();
-            while (-1 != lc.Advance() && char.IsWhiteSpace((char) lc.Current))
+            while (lc.MoveNext() && char.IsWhiteSpace((char) lc.Current))
             {
                 lc.Capture();
             }
@@ -156,12 +165,12 @@ namespace dfalex.util
         public static bool TrySkipWhiteSpace(this LexContext lc)
         {
             lc.EnsureStarted();
-            if (-1 == lc.Current || !char.IsWhiteSpace((char) lc.Current))
+            if (lc.IsEndOfInput || !char.IsWhiteSpace((char) lc.Current))
             {
                 return false;
             }
 
-            while (-1 != lc.Advance() && char.IsWhiteSpace((char) lc.Current))
+            while (lc.MoveNext() && char.IsWhiteSpace((char) lc.Current))
             { }
 
             return true;
@@ -176,9 +185,9 @@ namespace dfalex.util
         public static bool TryReadUntil(this LexContext lc, int character, bool readCharacter = true)
         {
             lc.EnsureStarted();
-            if (0 > character)
+            if (lc.IsEndOfInput)
             {
-                character = -1;
+                return false;
             }
 
             lc.Capture();
@@ -187,7 +196,7 @@ namespace dfalex.util
                 return true;
             }
 
-            while (-1 != lc.Advance() && lc.Current != character)
+            while (lc.MoveNext() && lc.Current != character)
             {
                 lc.Capture();
             }
@@ -198,7 +207,7 @@ namespace dfalex.util
                 if (readCharacter)
                 {
                     lc.Capture();
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -216,9 +225,9 @@ namespace dfalex.util
         public static bool TrySkipUntil(this LexContext lc, int character, bool skipCharacter = true)
         {
             lc.EnsureStarted();
-            if (0 > character)
+            if (lc.IsEndOfInput)
             {
-                character = -1;
+                return false;
             }
 
             if (lc.Current == character)
@@ -226,14 +235,14 @@ namespace dfalex.util
                 return true;
             }
 
-            while (-1 != lc.Advance() && lc.Current != character)
+            while (lc.MoveNext() && lc.Current != character)
             { }
 
             if (lc.Current == character)
             {
                 if (skipCharacter)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -252,12 +261,7 @@ namespace dfalex.util
         public static bool TryReadUntil(this LexContext lc, int character, int escapeChar, bool readCharacter = true)
         {
             lc.EnsureStarted();
-            if (0 > character)
-            {
-                character = -1;
-            }
-
-            if (-1 == lc.Current)
+            if (lc.IsEndOfInput)
             {
                 return false;
             }
@@ -267,7 +271,7 @@ namespace dfalex.util
                 if (readCharacter)
                 {
                     lc.Capture();
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -278,7 +282,7 @@ namespace dfalex.util
                 if (escapeChar == lc.Current)
                 {
                     lc.Capture();
-                    if (-1 == lc.Advance())
+                    if (!lc.MoveNext())
                     {
                         return false;
                     }
@@ -292,7 +296,7 @@ namespace dfalex.util
                         if (readCharacter)
                         {
                             lc.Capture();
-                            lc.Advance();
+                            lc.MoveNext();
                         }
 
                         return true;
@@ -300,7 +304,7 @@ namespace dfalex.util
 
                     lc.Capture();
                 }
-            } while (-1 != lc.Advance());
+            } while (lc.MoveNext());
 
             return false;
         }
@@ -315,9 +319,9 @@ namespace dfalex.util
         public static bool TrySkipUntil(this LexContext lc, int character, int escapeChar, bool skipCharacter = true)
         {
             lc.EnsureStarted();
-            if (0 > character)
+            if (lc.IsEndOfInput)
             {
-                character = -1;
+                return false;
             }
 
             if (lc.Current == character)
@@ -325,11 +329,11 @@ namespace dfalex.util
                 return true;
             }
 
-            while (-1 != lc.Advance() && lc.Current != character)
+            while (lc.MoveNext() && lc.Current != character)
             {
                 if (character == escapeChar)
                 {
-                    if (-1 == lc.Advance())
+                    if (!lc.MoveNext())
                     {
                         break;
                     }
@@ -340,7 +344,7 @@ namespace dfalex.util
             {
                 if (skipCharacter)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -371,31 +375,36 @@ namespace dfalex.util
         public static bool TryReadUntil(this LexContext lc, bool readCharacter = true, params char[]? anyOf)
         {
             lc.EnsureStarted();
+            if (lc.IsEndOfInput)
+            {
+                return false;
+            }
+
             anyOf ??= Array.Empty<char>();
 
             lc.Capture();
-            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
+            if (lc.MoveNext() && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (readCharacter)
                 {
                     lc.Capture();
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
             }
 
-            while (-1 != lc.Advance() && !_ContainsChar(anyOf, (char) lc.Current))
+            while (lc.MoveNext() && !_ContainsChar(anyOf, (char) lc.Current))
             {
                 lc.Capture();
             }
 
-            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
+            if (!lc.IsEndOfInput && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (readCharacter)
                 {
                     lc.Capture();
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -413,26 +422,31 @@ namespace dfalex.util
         public static bool TrySkipUntil(this LexContext lc, bool skipCharacter = true, params char[]? anyOf)
         {
             lc.EnsureStarted();
+            if (lc.IsEndOfInput)
+            {
+                return false;
+            }
+
             anyOf ??= Array.Empty<char>();
 
-            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
+            if (!lc.IsEndOfInput && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (skipCharacter)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
             }
 
-            while (-1 != lc.Advance() && !_ContainsChar(anyOf, (char) lc.Current))
+            while (lc.MoveNext() && !_ContainsChar(anyOf, (char) lc.Current))
             { }
 
-            if (-1 != lc.Current && _ContainsChar(anyOf, (char) lc.Current))
+            if (!lc.IsEndOfInput && _ContainsChar(anyOf, (char) lc.Current))
             {
                 if (skipCharacter)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                 }
 
                 return true;
@@ -449,17 +463,21 @@ namespace dfalex.util
         public static bool TryReadUntil(this LexContext lc, string text)
         {
             lc.EnsureStarted();
+            if (lc.IsEndOfInput)
+            {
+                return false;
+            }
             if (string.IsNullOrEmpty(text))
             {
                 return false;
             }
 
-            while (-1 != lc.Current && TryReadUntil(lc, text[0], false))
+            while (!lc.IsEndOfInput && TryReadUntil(lc, text[0], false))
             {
                 var found = true;
                 for (var i = 1; i < text.Length; ++i)
                 {
-                    if (lc.Advance() != text[i])
+                    if (lc.MoveNext() && lc.Current != text[i])
                     {
                         found = false;
                         break;
@@ -470,7 +488,7 @@ namespace dfalex.util
 
                 if (found)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                     return true;
                 }
             }
@@ -486,17 +504,21 @@ namespace dfalex.util
         public static bool TrySkipUntil(this LexContext lc, string text)
         {
             lc.EnsureStarted();
+            if (lc.IsEndOfInput)
+            {
+                return false;
+            }
             if (string.IsNullOrEmpty(text))
             {
                 return false;
             }
 
-            while (-1 != lc.Current && TrySkipUntil(lc, text[0], false))
+            while (!lc.IsEndOfInput && TrySkipUntil(lc, text[0], false))
             {
                 var found = true;
                 for (var i = 1; i < text.Length; ++i)
                 {
-                    if (lc.Advance() != text[i])
+                    if (lc.MoveNext() && lc.Current != text[i])
                     {
                         found = false;
                         break;
@@ -505,7 +527,7 @@ namespace dfalex.util
 
                 if (found)
                 {
-                    lc.Advance();
+                    lc.MoveNext();
                     return true;
                 }
             }
@@ -518,7 +540,7 @@ namespace dfalex.util
             lc.EnsureStarted();
             while (!lc.IsEndOfInput)
             {
-                lc.Advance();
+                lc.MoveNext();
                 lc.Capture();
             }
 
@@ -530,7 +552,7 @@ namespace dfalex.util
             lc.EnsureStarted();
             while (!lc.IsEndOfInput)
             {
-                lc.Advance();
+                lc.MoveNext();
             }
 
             return true;

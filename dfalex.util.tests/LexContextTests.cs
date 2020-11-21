@@ -7,39 +7,47 @@ namespace dfalex.util.tests
     public class LexContextTests
     {
         [Fact]
-        public void WhenAdvanceNotCalled_ShouldBeBeforeInput()
+        public void WhenMoveNextNotCalled_ShouldBeBeforeInput()
         {
             var sut = LexContext.Create("");
 
             sut.IsBeforeInput.Should().BeTrue();
+            sut.IsEndOfInput.Should().BeFalse();
         }
 
         [Fact]
-        public void WhenAdvanceNotCalled_ShouldBeInitialLocation()
+        public void WhenEmptyAndMoveNextCalled_ShouldBeEndOfInput()
         {
             var sut = LexContext.Create("");
 
-            sut.Location.Should().Be(new Location(1, 0, 0));
-        }
-
-        [Fact]
-        public void WhenEmptyAndAdvanceCalled_ShouldBeEndOfInput()
-        {
-            var sut = LexContext.Create("");
-
-            sut.Advance();
+            sut.MoveNext();
 
             sut.IsEndOfInput.Should().BeTrue();
+            sut.IsBeforeInput.Should().BeFalse();
         }
 
-        [Fact]
-        public void NewlineShouldIncrementLine()
+        [Theory]
+        [InlineData("",                 1, 0, 0)]
+        [InlineData("\n",               2, 0, 1)]
+        [InlineData("\r",               1, 0, 1)]
+        [InlineData("\t",               1, 4, 1)]
+        [InlineData("a",                1, 1, 1)]
+        [InlineData("a\n",              2, 0, 2)]
+        [InlineData("a\r",              1, 0, 2)]
+        [InlineData("a\t",              1, 4, 2)]
+        [InlineData("a\t\t",            1, 8, 3)]
+        [InlineData("abc\t",            1, 4, 4)]
+        [InlineData("abc \t",           1, 8, 5)]
+        [InlineData("line1\n\nline3\n", 4, 0, 13)]
+        public void LocationShouldReflectInput(string input, int line, int column, long position)
         {
-            var lc = LexContext.Create("line1\n\nline3\n");
+            var expected = new Location(line, column, position);
+            var sut = LexContext.Create(input);
 
-            lc.TrySkipUntilEndOfInput().Should().BeTrue();
+            while (sut.MoveNext())
+            { }
 
-            lc.Location.Should().Be(new Location(4, 1, 14));
+            sut.Location.Should().Be(expected);
         }
 
         public class WhenDisposingLexContext
