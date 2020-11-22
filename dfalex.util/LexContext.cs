@@ -67,15 +67,6 @@ namespace dfalex.util
     /// </summary>
     public abstract class LexContext : IDisposable
     {
-        private enum State
-        {
-            BeforeInput,
-            EndOfInput,
-            Disposed
-        }
-
-        private State state;
-
         /// <summary>
         /// Indicates the default tab width of an input device
         /// </summary>
@@ -86,17 +77,7 @@ namespace dfalex.util
         /// </summary>
         private const int EndOfInput = -1;
 
-        /// <summary>
-        /// Represents the before input symbol
-        /// </summary>
-        private const int BeforeInput = -2;
-
-        /// <summary>
-        /// Represents a symbol for the disposed state
-        /// </summary>
-        private const int Disposed = -3;
-
-        private int current = BeforeInput;
+        private int current;
 
         // Indicates the current one based line number
         private int line;
@@ -129,17 +110,17 @@ namespace dfalex.util
         /// </summary>
         public StringBuilder CaptureBuffer { get; } = new();
 
-        public bool IsBeforeInput => current == BeforeInput;
+        public bool IsBeforeInput => position < 0;
 
-        public bool IsEndOfInput => current == EndOfInput;
+        public bool IsEndOfInput { get; private set; }
 
-        protected bool IsDisposed => current == Disposed;
+        protected bool IsDisposed { get; private set; }
 
         internal LexContext()
         {
             line = 1;
             column = 0;
-            position = 0L;
+            position = -1L;
         }
 
         ~LexContext()
@@ -164,7 +145,7 @@ namespace dfalex.util
                     CaptureBuffer.Clear(); // ???
                 }
 
-                current = Disposed;
+                IsDisposed = true;
             }
         }
 
@@ -177,7 +158,7 @@ namespace dfalex.util
         }
 
         /// <summary>
-        /// Gets the current character under the cursor or <see cref="BeforeInput"/>, <see cref="EndOfInput" />, or <see cref="Disposed" />
+        /// Gets the current character under the cursor.
         /// </summary>
         public int Current
         {
@@ -206,8 +187,10 @@ namespace dfalex.util
             }
 
             current = AdvanceInner();
-            if (IsEndOfInput)
+            ++position;
+            if (current == EndOfInput)
             {
+                IsEndOfInput = true;
                 return false;
             }
 
@@ -236,7 +219,6 @@ namespace dfalex.util
                     break;
             }
 
-            ++position;
             return true;
         }
 
@@ -330,7 +312,7 @@ namespace dfalex.util
         public void Capture()
         {
             CheckDisposed();
-            if (current != EndOfInput && current != BeforeInput)
+            if (!IsEndOfInput && !IsBeforeInput)
             {
                 CaptureBuffer.Append((char) current);
             }

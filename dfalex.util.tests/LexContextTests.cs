@@ -50,6 +50,22 @@ namespace dfalex.util.tests
             sut.Location.Should().Be(expected);
         }
 
+        [Theory]
+        [InlineData("\t",     8)]
+        [InlineData("    \t", 8)]
+        [InlineData("\t\t ",   17)]
+        public void LocationShouldRespectTabWitdh(string input, int column)
+        {
+            var expected = new Location(1, column, input.Length);
+            var sut = LexContext.Create(input);
+            sut.TabWidth = 8;
+
+            while (sut.MoveNext())
+            { }
+
+            sut.Location.Should().Be(expected);
+        }
+
         public class WhenDisposingLexContext
         {
             [Fact]
